@@ -1,0 +1,33 @@
+#!/bin/bash
+set -e
+
+BBB_WEB_PROPS=/etc/bigbluebutton/bbb-web.properties
+MANIFEST_URL_PATH="/plugins/remote-desktop/manifest.json"
+
+case "$1" in
+    configure)
+        if [ -f "$BBB_WEB_PROPS" ]; then
+            # Read existing pluginManifests value
+            CURRENT=$(grep -oP '(?<=^pluginManifests=).*' "$BBB_WEB_PROPS" 2>/dev/null || echo "")
+
+            # Check if our manifest is already listed
+            if echo "$CURRENT" | grep -q "remote-desktop/manifest.json"; then
+                echo "bbb-plugin-remote-desktop: manifest already configured"
+            elif [ -z "$CURRENT" ] || [ "$CURRENT" = "[]" ]; then
+                # No existing plugins — set ours
+                # Use a relative URL so it works regardless of hostname
+                sed -i '/^pluginManifests=/d' "$BBB_WEB_PROPS"
+                echo "pluginManifests=[{\"url\":\"$MANIFEST_URL_PATH\"}]" >> "$BBB_WEB_PROPS"
+                echo "bbb-plugin-remote-desktop: added manifest to bbb-web.properties"
+            else
+                # Append to existing plugin list
+                # Remove trailing ] and add our entry
+                NEW=$(echo "$CURRENT" | sed "s/]$/,{\"url\":\"$MANIFEST_URL_PATH\"}]/")
+                sed -i "s|^pluginManifests=.*|pluginManifests=$NEW|" "$BBB_WEB_PROPS"
+                echo "bbb-plugin-remote-desktop: appended manifest to existing pluginManifests"
+            fi
+        fi
+        ;;
+esac
+
+#DEBHELPER#

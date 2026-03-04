@@ -1,0 +1,13 @@
+Source: bbb-plugin-remote-desktop
+Section: web
+Priority: optional
+Maintainer: Brent Baccala <cosine@freesoft.org>
+Build-Depends: debhelper-compat (= 13), nodejs, npm
+
+Package: bbb-plugin-remote-desktop
+Architecture: all
+Depends: ${misc:Depends}
+Description: BigBlueButton remote desktop plugin
+ Adds VNC remote desktop sharing to BigBlueButton v3.0 via the plugin
+ architecture. Moderators can share a VNC desktop in the presentation
+ area. No core BBB modifications required.
