@@ -1,0 +1,13 @@
+{
+  "requiredSdkVersion": "~0.0.84",
+  "name": "RemoteDesktop",
+  "javascriptEntrypointUrl": "RemoteDesktop.js",
+  "localesBaseUrl": "locales",
+  "dataChannels": [
+    {
+      "name": "remoteDesktop",
+      "pushPermission": ["moderator", "presenter"],
+      "replaceOrDeletePermission": ["creator", "moderator"]
+    }
+  ]
+}

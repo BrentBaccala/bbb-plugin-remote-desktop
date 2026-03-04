@@ -1,0 +1,18 @@
+{
+  "app.remoteDesktop.title": "Share a remote desktop",
+  "app.remoteDesktop.start": "Share",
+  "app.remoteDesktop.stop": "Stop sharing",
+  "app.remoteDesktop.urlLabel": "Remote Desktop URL",
+  "app.remoteDesktop.urlPlaceholder": "wss://vnc-server/websockify",
+  "app.remoteDesktop.urlError": "URL must start with wss:",
+  "app.remoteDesktop.passwordLabel": "Password",
+  "app.remoteDesktop.operatorsLabel": "Who can operate the desktop",
+  "app.remoteDesktop.operators.all": "All users",
+  "app.remoteDesktop.operators.moderators": "Moderators only",
+  "app.remoteDesktop.operators.presenter": "Presenter only",
+  "app.remoteDesktop.operators.me": "Only me",
+  "app.remoteDesktop.note": "Users will connect directly to this VNC server from their browser.",
+  "app.remoteDesktop.menuItem": "Share a remote desktop",
+  "app.remoteDesktop.editItem": "Edit remote desktop",
+  "app.remoteDesktop.stopItem": "Stop remote desktop"
+}
