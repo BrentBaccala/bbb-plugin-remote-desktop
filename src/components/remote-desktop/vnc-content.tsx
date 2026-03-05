@@ -49,7 +49,13 @@ export function VncContent({
     if (!el) return;
     const nowFullscreen = document.fullscreenElement === el;
     setIsFullscreen(nowFullscreen);
-    if (playerRef.current?.rfb?._handleResize) {
+    if (playerRef.current?.rfb) {
+      // Invalidate noVNC's cached expected client size so that
+      // _handleResize() doesn't bail out when the container returns
+      // to its pre-fullscreen dimensions (which match the size saved
+      // at connection time).
+      playerRef.current.rfb._expectedClientWidth = null;
+      playerRef.current.rfb._expectedClientHeight = null;
       playerRef.current.rfb._handleResize();
     }
   }, []);
