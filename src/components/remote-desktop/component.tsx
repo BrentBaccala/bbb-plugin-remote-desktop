@@ -162,14 +162,14 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   // Set action bar lock/unlock button
   useEffect(() => {
     if (showingContent && activeConfig && !viewOnly) {
-      pluginApi.setActionsBarItems([
-        new ActionsBarButton({
-          icon: { iconName: locked ? 'lock' : 'unlock' },
-          tooltip: locked ? 'Unlock remote desktop controls' : 'Lock remote desktop controls',
-          onClick: () => setLocked(!locked),
-          position: ActionsBarPosition.RIGHT,
-        }),
-      ]);
+      const button = new ActionsBarButton({
+        icon: { iconName: locked ? 'lock' : 'unlock' },
+        tooltip: locked ? 'Unlock remote desktop controls' : 'Lock remote desktop controls',
+        onClick: () => setLocked(!locked),
+        position: ActionsBarPosition.RIGHT,
+      });
+      (button as any).color = locked ? 'default' : 'primary';
+      pluginApi.setActionsBarItems([button]);
     } else {
       pluginApi.setActionsBarItems([]);
     }

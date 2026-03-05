@@ -109,7 +109,7 @@ export function VncContent({
           padding: 0,
           border: 'none',
           borderRadius: 4,
-          background: 'rgba(0, 0, 0, 0.5)',
+          background: 'rgba(6, 23, 42, 0.7)',
           color: '#fff',
           cursor: 'pointer',
           display: 'flex',
