@@ -5,3 +5,8 @@ dist-tsc/
 *.deb
 *.buildinfo
 *.changes
+debian/.debhelper/
+debian/bbb-plugin-remote-desktop/
+debian/bbb-plugin-remote-desktop.substvars
+debian/debhelper-build-stamp
+debian/files
