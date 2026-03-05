@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import {
   ActionButtonDropdownOption,
@@ -80,6 +80,19 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
     }
   }, [channelData]);
 
+  const vncRootRef = useRef<ReactDOM.Root | null>(null);
+
+  const renderVnc = (root: ReactDOM.Root) => {
+    root.render(
+      <VncContent
+        url={`${activeConfig!.url}${activeConfig!.url.includes('?') ? '&' : '?'}sessionToken=${sessionToken}`}
+        password={activeConfig!.password || ''}
+        viewOnly={viewOnly}
+        locked={locked}
+      />,
+    );
+  };
+
   // Render VNC display via GenericContentMainArea when active
   useEffect(() => {
     if (activeConfig && activeConfig.url) {
@@ -88,14 +101,8 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
         new GenericContentMainArea({
           contentFunction: (element: HTMLElement) => {
             const root = ReactDOM.createRoot(element);
-            root.render(
-              <VncContent
-                url={`${activeConfig.url}${activeConfig.url.includes('?') ? '&' : '?'}sessionToken=${sessionToken}`}
-                password={activeConfig.password || ''}
-                viewOnly={viewOnly}
-                locked={locked}
-              />,
-            );
+            vncRootRef.current = root;
+            renderVnc(root);
             return root;
           },
         }),
@@ -104,8 +111,16 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
     } else {
       pluginApi.setGenericContentItems([]);
       setGenericContentId('');
+      vncRootRef.current = null;
     }
-  }, [activeConfig, viewOnly, locked]);
+  }, [activeConfig]);
+
+  // Re-render VncContent when locked/viewOnly changes without recreating the connection
+  useEffect(() => {
+    if (vncRootRef.current && activeConfig) {
+      renderVnc(vncRootRef.current);
+    }
+  }, [viewOnly, locked]);
 
   // Set action button dropdown items
   useEffect(() => {
@@ -147,14 +162,9 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   // Set action bar lock/unlock button
   useEffect(() => {
     if (showingContent && activeConfig && !viewOnly) {
-      const lockSvg = {
-        svgContent: locked
-          ? (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>) as any
-          : (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>) as any,
-      };
       pluginApi.setActionsBarItems([
         new ActionsBarButton({
-          icon: lockSvg,
+          icon: { iconName: locked ? 'lock' : 'unlock' },
           tooltip: locked ? 'Unlock remote desktop controls' : 'Lock remote desktop controls',
           onClick: () => setLocked(!locked),
           position: ActionsBarPosition.RIGHT,
