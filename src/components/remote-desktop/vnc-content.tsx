@@ -6,22 +6,19 @@ interface VncContentProps {
   url: string;
   password: string;
   viewOnly: boolean;
-  onStop: () => void;
-  isModerator: boolean;
+  locked: boolean;
 }
 
 export function VncContent({
   url,
   password,
   viewOnly,
-  onStop,
-  isModerator,
+  locked,
 }: VncContentProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const clipboardTextRef = useRef('');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [locked, setLocked] = useState(true);
 
   const effectiveViewOnly = viewOnly || locked;
 
@@ -80,16 +77,6 @@ export function VncContent({
     }
   }, []);
 
-  const buttonStyle: React.CSSProperties = {
-    padding: '6px 12px',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '0.8rem',
-    fontWeight: 600,
-    color: '#fff',
-  };
-
   return (
     <div
       ref={containerRef}
@@ -101,47 +88,47 @@ export function VncContent({
       }}
       onFocus={() => transferClipboardText()}
     >
-      {/* Toolbar overlay */}
-      <div style={{
-        position: 'absolute',
-        top: 8,
-        right: 8,
-        zIndex: 10,
-        display: 'flex',
-        gap: '4px',
-      }}>
-        {!viewOnly && (
-          <button
-            type="button"
-            onClick={() => setLocked(!locked)}
-            style={{
-              ...buttonStyle,
-              background: locked ? '#e74c3c' : '#27ae60',
-            }}
-            title={locked ? 'Unlock controls (currently view-only)' : 'Lock controls (currently interactive)'}
-          >
-            {locked ? '\uD83D\uDD12 Locked' : '\uD83D\uDD13 Unlocked'}
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={toggleFullscreen}
-          style={{ ...buttonStyle, background: '#555' }}
-          title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-        >
-          {isFullscreen ? '\u2716 Exit' : '\u26F6 Fullscreen'}
-        </button>
-        {isModerator && (
-          <button
-            type="button"
-            onClick={onStop}
-            style={{ ...buttonStyle, background: '#c0392b' }}
-            title="Stop sharing remote desktop"
-          >
-            \u25A0 Stop
-          </button>
-        )}
-      </div>
+      {/* Fullscreen button overlay */}
+      <button
+        type="button"
+        onClick={toggleFullscreen}
+        title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+        style={{
+          position: 'absolute',
+          top: 8,
+          right: 8,
+          zIndex: 10,
+          width: 32,
+          height: 32,
+          padding: 0,
+          border: 'none',
+          borderRadius: 4,
+          background: 'rgba(0, 0, 0, 0.5)',
+          color: '#fff',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          {isFullscreen ? (
+            <>
+              <polyline points="4 14 10 14 10 20" />
+              <polyline points="20 10 14 10 14 4" />
+              <line x1="14" y1="10" x2="21" y2="3" />
+              <line x1="3" y1="21" x2="10" y2="14" />
+            </>
+          ) : (
+            <>
+              <polyline points="15 3 21 3 21 9" />
+              <polyline points="9 21 3 21 3 15" />
+              <line x1="21" y1="3" x2="14" y2="10" />
+              <line x1="3" y1="21" x2="10" y2="14" />
+            </>
+          )}
+        </svg>
+      </button>
 
       <VncDisplay
         width="100%"

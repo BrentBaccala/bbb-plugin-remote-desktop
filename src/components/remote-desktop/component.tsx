@@ -4,6 +4,8 @@ import * as ReactDOM from 'react-dom/client';
 import {
   ActionButtonDropdownOption,
   ActionButtonDropdownSeparator,
+  ActionsBarButton,
+  ActionsBarPosition,
   BbbPluginSdk,
   GenericContentMainArea,
   PluginApi,
@@ -42,11 +44,17 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   const [genericContentId, setGenericContentId] = useState<string>('');
   const [activeConfig, setActiveConfig] = useState<RemoteDesktopConfig | null>(null);
   const [showingContent, setShowingContent] = useState(false);
+  const [locked, setLocked] = useState(true);
 
   const isModerator = currentUser?.role === 'MODERATOR';
   const isPresenter = !!currentUser?.presenter;
   const userId = currentUser?.userId || '';
   const sessionToken = pluginApi.getSessionToken();
+  const viewOnly = activeConfig ? !canOperate(activeConfig.operators || 'all', {
+    presenter: isPresenter,
+    isModerator,
+    userId,
+  }) : true;
 
   // Track whether our generic content is in the layout pile
   useEffect(() => {
@@ -75,12 +83,6 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   // Render VNC display via GenericContentMainArea when active
   useEffect(() => {
     if (activeConfig && activeConfig.url) {
-      const userCanOperate = canOperate(activeConfig.operators || 'all', {
-        presenter: isPresenter,
-        isModerator,
-        userId,
-      });
-
       pluginApi.setGenericContentItems([]);
       const ids = pluginApi.setGenericContentItems([
         new GenericContentMainArea({
@@ -90,11 +92,8 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
               <VncContent
                 url={`${activeConfig.url}${activeConfig.url.includes('?') ? '&' : '?'}sessionToken=${sessionToken}`}
                 password={activeConfig.password || ''}
-                viewOnly={!userCanOperate}
-                onStop={() => {
-                  deleteEntry([RESET_DATA_CHANNEL]);
-                }}
-                isModerator={isModerator}
+                viewOnly={viewOnly}
+                locked={locked}
               />,
             );
             return root;
@@ -106,7 +105,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
       pluginApi.setGenericContentItems([]);
       setGenericContentId('');
     }
-  }, [activeConfig, isModerator, isPresenter, userId]);
+  }, [activeConfig, viewOnly, locked]);
 
   // Set action button dropdown items
   useEffect(() => {
@@ -116,7 +115,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
       if (showingContent && activeConfig) {
         items.push(
           new ActionButtonDropdownOption({
-            label: 'Stop remote desktop',
+            label: 'Stop sharing remote desktop',
             icon: 'desktop',
             tooltip: 'Stop sharing the remote desktop',
             allowed: true,
@@ -144,6 +143,27 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
       pluginApi.setActionButtonDropdownItems([]);
     }
   }, [currentUser, showingContent, activeConfig]);
+
+  // Set action bar lock/unlock button
+  useEffect(() => {
+    if (showingContent && activeConfig && !viewOnly) {
+      const lockSvg = {
+        svgContent: locked
+          ? (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>) as any
+          : (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>) as any,
+      };
+      pluginApi.setActionsBarItems([
+        new ActionsBarButton({
+          icon: lockSvg,
+          tooltip: locked ? 'Unlock remote desktop controls' : 'Lock remote desktop controls',
+          onClick: () => setLocked(!locked),
+          position: ActionsBarPosition.RIGHT,
+        }),
+      ]);
+    } else {
+      pluginApi.setActionsBarItems([]);
+    }
+  }, [showingContent, activeConfig, locked, viewOnly]);
 
   const handleShare = (config: RemoteDesktopConfig) => {
     deleteEntry([RESET_DATA_CHANNEL]);
