@@ -7,6 +7,7 @@ interface VncContentProps {
   password: string;
   viewOnly: boolean;
   locked: boolean;
+  clipboardEnabled: boolean;
   reconnectCounter: number;
 }
 
@@ -15,6 +16,7 @@ export function VncContent({
   password,
   viewOnly,
   locked,
+  clipboardEnabled,
   reconnectCounter,
 }: VncContentProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -48,14 +50,32 @@ export function VncContent({
     }
   }, []);
 
+  // Browser → VNC: listen for copy/cut events
   useEffect(() => {
+    if (!clipboardEnabled) return () => {};
     document.addEventListener('cut', transferClipboardText);
     document.addEventListener('copy', transferClipboardText);
     return () => {
       document.removeEventListener('copy', transferClipboardText);
       document.removeEventListener('cut', transferClipboardText);
     };
-  }, [transferClipboardText]);
+  }, [transferClipboardText, clipboardEnabled]);
+
+  // VNC → Browser: listen for clipboard events from remote desktop
+  useEffect(() => {
+    if (!clipboardEnabled) return () => {};
+    const rfb = playerRef.current?.rfb;
+    if (!rfb) return () => {};
+    const handler = (event: any) => {
+      if (typeof navigator.clipboard?.writeText === 'function') {
+        navigator.clipboard.writeText(event.detail.text).catch(() => {});
+      }
+    };
+    rfb.addEventListener('clipboard', handler);
+    return () => {
+      rfb.removeEventListener('clipboard', handler);
+    };
+  }, [clipboardEnabled]);
 
   const onFullscreenChange = useCallback(() => {
     const el = containerRef.current;
@@ -105,7 +125,7 @@ export function VncContent({
         position: 'relative',
         background: 'var(--color-background, #06172A)',
       }}
-      onFocus={() => transferClipboardText()}
+      onFocus={() => { if (clipboardEnabled) transferClipboardText(); }}
     >
       {/* Fullscreen button overlay */}
       <button
@@ -166,11 +186,6 @@ export function VncContent({
         url={url}
         credentials={{ password: password || '' }}
         onConnect={handleResize}
-        onClipboard={(event: any) => {
-          if (typeof navigator.clipboard?.writeText === 'function') {
-            navigator.clipboard.writeText(event.detail.text).catch(() => {});
-          }
-        }}
         viewOnly={effectiveViewOnly}
         shared
         scaleViewport

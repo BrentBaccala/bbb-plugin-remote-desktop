@@ -8,6 +8,8 @@ import {
   ActionsBarPosition,
   BbbPluginSdk,
   GenericContentMainArea,
+  OptionsDropdownOption,
+  OptionsDropdownSeparator,
   PluginApi,
   LayoutPresentationAreaUiDataNames,
   UiLayouts,
@@ -46,6 +48,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   const [activeConfig, setActiveConfig] = useState<RemoteDesktopConfig | null>(null);
   const [showingContent, setShowingContent] = useState(false);
   const [locked, setLocked] = useState(true);
+  const [clipboardEnabled, setClipboardEnabled] = useState(false);
   const [reconnectCounter, setReconnectCounter] = useState(0);
 
   const isModerator = currentUser?.role === 'MODERATOR';
@@ -91,6 +94,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
         password={activeConfig!.password || ''}
         viewOnly={viewOnly}
         locked={locked}
+        clipboardEnabled={clipboardEnabled}
         reconnectCounter={reconnectCounter}
       />,
     );
@@ -123,7 +127,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
     if (vncRootRef.current && activeConfig) {
       renderVnc(vncRootRef.current);
     }
-  }, [viewOnly, locked, reconnectCounter]);
+  }, [viewOnly, locked, clipboardEnabled, reconnectCounter]);
 
   // Set action button dropdown items
   useEffect(() => {
@@ -177,6 +181,22 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
       pluginApi.setActionsBarItems([]);
     }
   }, [showingContent, activeConfig, locked, viewOnly]);
+
+  // Set options dropdown clipboard toggle
+  useEffect(() => {
+    if (showingContent && activeConfig) {
+      pluginApi.setOptionsDropdownItems([
+        new OptionsDropdownSeparator(),
+        new OptionsDropdownOption({
+          label: clipboardEnabled ? 'Disable clipboard' : 'Enable clipboard',
+          icon: clipboardEnabled ? 'clipboard' : 'clipboard',
+          onClick: () => setClipboardEnabled((prev) => !prev),
+        }),
+      ]);
+    } else {
+      pluginApi.setOptionsDropdownItems([]);
+    }
+  }, [showingContent, activeConfig, clipboardEnabled]);
 
   const handleShare = (config: RemoteDesktopConfig) => {
     deleteEntry([RESET_DATA_CHANNEL]);
