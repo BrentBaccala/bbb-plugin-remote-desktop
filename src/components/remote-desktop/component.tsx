@@ -17,6 +17,7 @@ import {
 import { RemoteDesktopConfig, RemoteDesktopPluginProps } from './types';
 import { RemoteDesktopModal } from './modal';
 import { VncContent } from './vnc-content';
+import { ButtonSubmenu } from './button-submenu';
 
 function canOperate(operators: string, user: { presenter: boolean; isModerator: boolean; userId: string }): boolean {
   if (operators === 'all') return true;
@@ -45,6 +46,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   const [activeConfig, setActiveConfig] = useState<RemoteDesktopConfig | null>(null);
   const [showingContent, setShowingContent] = useState(false);
   const [locked, setLocked] = useState(true);
+  const [reconnectCounter, setReconnectCounter] = useState(0);
 
   const isModerator = currentUser?.role === 'MODERATOR';
   const isPresenter = !!currentUser?.presenter;
@@ -89,6 +91,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
         password={activeConfig!.password || ''}
         viewOnly={viewOnly}
         locked={locked}
+        reconnectCounter={reconnectCounter}
       />,
     );
   };
@@ -115,12 +118,12 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
     }
   }, [activeConfig]);
 
-  // Re-render VncContent when locked/viewOnly changes without recreating the connection
+  // Re-render VncContent when locked/viewOnly/reconnect changes without recreating the connection
   useEffect(() => {
     if (vncRootRef.current && activeConfig) {
       renderVnc(vncRootRef.current);
     }
-  }, [viewOnly, locked]);
+  }, [viewOnly, locked, reconnectCounter]);
 
   // Set action button dropdown items
   useEffect(() => {
@@ -181,13 +184,23 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
     setShowModal(false);
   };
 
+  const showSubmenu = showingContent && activeConfig && !viewOnly;
+
   return (
-    <RemoteDesktopModal
-      isOpen={showModal}
-      onClose={() => setShowModal(false)}
-      onShare={handleShare}
-      currentUserId={userId}
-    />
+    <>
+      <RemoteDesktopModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onShare={handleShare}
+        currentUserId={userId}
+      />
+      {showSubmenu && (
+        <ButtonSubmenu
+          buttonLabel={locked ? 'Lock remote desktop controls' : 'Unlock remote desktop controls'}
+          onReconnect={() => setReconnectCounter((c) => c + 1)}
+        />
+      )}
+    </>
   );
 }
 

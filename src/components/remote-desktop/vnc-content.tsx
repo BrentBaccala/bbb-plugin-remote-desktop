@@ -7,6 +7,7 @@ interface VncContentProps {
   password: string;
   viewOnly: boolean;
   locked: boolean;
+  reconnectCounter: number;
 }
 
 export function VncContent({
@@ -14,11 +15,23 @@ export function VncContent({
   password,
   viewOnly,
   locked,
+  reconnectCounter,
 }: VncContentProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const clipboardTextRef = useRef('');
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const reconnectRef = useRef(reconnectCounter);
+
+  useEffect(() => {
+    if (reconnectCounter !== reconnectRef.current) {
+      reconnectRef.current = reconnectCounter;
+      if (playerRef.current) {
+        playerRef.current.connect();
+      }
+    }
+  }, [reconnectCounter]);
 
   const effectiveViewOnly = viewOnly || locked;
 
