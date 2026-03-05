@@ -57,6 +57,8 @@ interface VncDisplayProps {
 export default class VncDisplay extends Component<VncDisplayProps> {
   rfb: any = null;
   canvas: HTMLDivElement | null = null;
+  intersectionObserver: IntersectionObserver | null = null;
+  wasHidden: boolean = false;
 
   static defaultProps: Partial<VncDisplayProps> = {
     style: null,
@@ -67,9 +69,32 @@ export default class VncDisplay extends Component<VncDisplayProps> {
 
   componentDidMount() {
     this.connect();
+    if (this.canvas) {
+      this.intersectionObserver = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting && this.wasHidden && this.rfb) {
+            this.rfb._handleResize();
+            // Request a full (non-incremental) framebuffer update
+            if (this.rfb._rfbConnectionState === 'connected'
+                && this.rfb._sock && this.rfb._fbWidth && this.rfb._fbHeight) {
+              (RFB as any).messages.fbUpdateRequest(
+                this.rfb._sock, false, 0, 0,
+                this.rfb._fbWidth, this.rfb._fbHeight,
+              );
+            }
+          }
+          this.wasHidden = !entry.isIntersecting;
+        }
+      });
+      this.intersectionObserver.observe(this.canvas);
+    }
   }
 
   componentWillUnmount() {
+    if (this.intersectionObserver) {
+      this.intersectionObserver.disconnect();
+      this.intersectionObserver = null;
+    }
     this.disconnect();
   }
 
