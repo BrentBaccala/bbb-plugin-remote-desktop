@@ -46,6 +46,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   const isModerator = currentUser?.role === 'MODERATOR';
   const isPresenter = !!currentUser?.presenter;
   const userId = currentUser?.userId || '';
+  const sessionToken = pluginApi.getSessionToken();
 
   // Track whether our generic content is in the layout pile
   useEffect(() => {
@@ -87,7 +88,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
             const root = ReactDOM.createRoot(element);
             root.render(
               <VncContent
-                url={activeConfig.url}
+                url={`${activeConfig.url}${activeConfig.url.includes('?') ? '&' : '?'}sessionToken=${sessionToken}`}
                 password={activeConfig.password || ''}
                 viewOnly={!userCanOperate}
                 onStop={() => {

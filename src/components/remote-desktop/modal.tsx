@@ -7,7 +7,6 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   onShare: (config: RemoteDesktopConfig) => void;
-  defaultUrl?: string;
   currentUserId: string;
 }
 
@@ -56,19 +55,20 @@ export function RemoteDesktopModal({
   isOpen,
   onClose,
   onShare,
-  defaultUrl = '',
   currentUserId,
 }: ModalProps): React.ReactElement {
-  const [url, setUrl] = useState(defaultUrl);
+  const defaultUrl = (window as any).meetingClientSettings?.public?.remoteDesktop?.defaultUrl || '';
+  const [url, setUrl] = useState('');
   const [password, setPassword] = useState('');
   const [operators, setOperators] = useState('all');
 
-  const isValid = typeof url === 'string' && url.startsWith('wss:');
+  const effectiveUrl = url || defaultUrl;
+  const isValid = typeof effectiveUrl === 'string' && effectiveUrl.startsWith('wss:');
 
   const handleShare = () => {
     const resolvedOperators = operators === 'me' ? currentUserId : operators;
     onShare({
-      url: url.trim(),
+      url: effectiveUrl.trim(),
       password,
       operators: resolvedOperators,
       sharedBy: currentUserId,
@@ -100,14 +100,14 @@ export function RemoteDesktopModal({
           style={inputStyle}
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="wss://vnc-server/websockify"
+          placeholder={defaultUrl || "wss://vnc-server/websockify"}
           onPaste={(e) => e.stopPropagation()}
           onCut={(e) => e.stopPropagation()}
           onCopy={(e) => e.stopPropagation()}
         />
       </label>
 
-      {!isValid && url ? (
+      {!isValid && effectiveUrl ? (
         <div style={{ color: '#c00', fontSize: '0.8rem', marginTop: '-0.75rem', marginBottom: '0.75rem' }}>
           URL must start with wss:
         </div>
@@ -158,14 +158,14 @@ export function RemoteDesktopModal({
         <button
           type="button"
           onClick={handleShare}
-          disabled={!isValid || !url}
+          disabled={!isValid || !effectiveUrl}
           style={{
             padding: '0.5rem 1rem',
             border: 'none',
             borderRadius: '4px',
-            background: !isValid || !url ? '#ccc' : '#0f70d7',
+            background: !isValid || !effectiveUrl ? '#ccc' : '#0f70d7',
             color: '#fff',
-            cursor: !isValid || !url ? 'default' : 'pointer',
+            cursor: !isValid || !effectiveUrl ? 'default' : 'pointer',
             fontWeight: 600,
           }}
         >
