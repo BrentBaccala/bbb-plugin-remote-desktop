@@ -35,6 +35,23 @@ case "$1" in
                 sed -i "s|^pluginManifests=.*|pluginManifests=$NEW|" "$BBB_WEB_PROPS"
                 echo "bbb-plugin-remote-desktop: appended manifest to existing pluginManifests"
             fi
+
+            # Patch BBB core to respect plugin-specified button color.
+            # BBB hardcodes color:"primary" for all plugin action bar buttons;
+            # this sed adds fallback to plugin.color so the lock/unlock button
+            # can use 'default' (white) when locked and 'primary' (blue) when
+            # unlocked. This is a no-op once the upstream fix is accepted.
+            # See: https://github.com/bigbluebutton/bigbluebutton (actions-bar/component.jsx)
+            for bundle in /usr/share/bigbluebutton/html5-client/bundle.*.js; do
+                if [ -f "$bundle" ] && grep -q 'color:"primary",size:"lg"' "$bundle"; then
+                    sed -i 's/eLabel:\!0,color:"primary",size:"lg"/eLabel:\!0,color:j.color||"primary",size:"lg"/' "$bundle"
+                    # Regenerate gzip if it exists
+                    if [ -f "${bundle}.gz" ]; then
+                        gzip -kf "$bundle"
+                    fi
+                    echo "bbb-plugin-remote-desktop: patched $(basename $bundle) for plugin button color support"
+                fi
+            done
         fi
         ;;
 esac
