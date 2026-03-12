@@ -9,5 +9,19 @@
       "pushPermission": ["moderator", "presenter"],
       "replaceOrDeletePermission": ["creator", "moderator"]
     }
+  ],
+  "settingsSchema": [
+    {
+      "name": "remoteDesktopUrl",
+      "type": "string",
+      "required": false,
+      "defaultValue": ""
+    },
+    {
+      "name": "startLocked",
+      "type": "boolean",
+      "required": false,
+      "defaultValue": true
+    }
   ]
 }

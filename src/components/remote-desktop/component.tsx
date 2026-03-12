@@ -43,11 +43,14 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
     [{ isOpen: true, currentElement: UiLayouts.WHITEBOARD }],
   );
 
+  const { data: settings } = pluginApi.usePluginSettings();
+  const startLocked = (settings as any)?.startLocked ?? true;
+  const defaultUrl = (settings as any)?.remoteDesktopUrl || '';
+
   const [showModal, setShowModal] = useState(false);
   const [genericContentId, setGenericContentId] = useState<string>('');
   const [activeConfig, setActiveConfig] = useState<RemoteDesktopConfig | null>(null);
   const [showingContent, setShowingContent] = useState(false);
-  const startLocked = (window as any).meetingClientSettings?.public?.remoteDesktop?.startLocked ?? true;
   const [locked, setLocked] = useState(startLocked);
   const [clipboardEnabled, setClipboardEnabled] = useState(false);
   const [reconnectCounter, setReconnectCounter] = useState(0);
@@ -214,6 +217,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
         onClose={() => setShowModal(false)}
         onShare={handleShare}
         currentUserId={userId}
+        defaultUrl={defaultUrl}
       />
       {showSubmenu && (
         <ButtonSubmenu

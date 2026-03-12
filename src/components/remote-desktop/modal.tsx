@@ -8,6 +8,7 @@ interface ModalProps {
   onClose: () => void;
   onShare: (config: RemoteDesktopConfig) => void;
   currentUserId: string;
+  defaultUrl: string;
 }
 
 const modalStyle: ReactModal.Styles = {
@@ -56,8 +57,8 @@ export function RemoteDesktopModal({
   onClose,
   onShare,
   currentUserId,
+  defaultUrl,
 }: ModalProps): React.ReactElement {
-  const defaultUrl = (window as any).meetingClientSettings?.public?.remoteDesktop?.defaultUrl || '';
   const [url, setUrl] = useState('');
   const [password, setPassword] = useState('');
   const [operators, setOperators] = useState('all');
