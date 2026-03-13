@@ -16,10 +16,11 @@ import {
   RESET_DATA_CHANNEL,
 } from 'bigbluebutton-html-plugin-sdk';
 
-import { RemoteDesktopConfig, RemoteDesktopPluginProps } from './types';
+import { RemoteDesktopConfig, RemoteDesktopPluginProps, ButtonConfig } from './types';
 import { RemoteDesktopModal } from './modal';
 import { VncContent } from './vnc-content';
 import { ButtonSubmenu } from './button-submenu';
+import { resolveIcon } from './icons';
 
 function canOperate(operators: string, user: { presenter: boolean; isModerator: boolean; userId: string }): boolean {
   if (operators === 'all') return true;
@@ -46,6 +47,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   const { data: settings } = pluginApi.usePluginSettings();
   const startLocked = (settings as any)?.startLocked ?? true;
   const defaultUrl = (settings as any)?.remoteDesktopUrl || '';
+  const buttons: ButtonConfig[] = (settings as any)?.buttons || [];
 
   const [showModal, setShowModal] = useState(false);
   const [genericContentId, setGenericContentId] = useState<string>('');
@@ -54,6 +56,11 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   const [locked, setLocked] = useState(startLocked);
   const [clipboardEnabled, setClipboardEnabled] = useState(false);
   const [reconnectCounter, setReconnectCounter] = useState(0);
+  // The noVNC RFB object lives inside VncContent, which is rendered in a
+  // separate React root (GenericContentMainArea).  rfbRef bridges that
+  // boundary so the action bar buttons can call rfb.sendKey() to send
+  // keysyms (e.g. F22 for grid toggle) to the VNC server.
+  const rfbRef = useRef<any>(null);
 
   const isModerator = currentUser?.role === 'MODERATOR';
   const isPresenter = !!currentUser?.presenter;
@@ -100,6 +107,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
         locked={locked}
         clipboardEnabled={clipboardEnabled}
         reconnectCounter={reconnectCounter}
+        onRfbReady={(rfb: any) => { rfbRef.current = rfb; }}
       />,
     );
   };
@@ -123,6 +131,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
       pluginApi.setGenericContentItems([]);
       setGenericContentId('');
       vncRootRef.current = null;
+      rfbRef.current = null;
     }
   }, [activeConfig]);
 
@@ -170,21 +179,51 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
     }
   }, [currentUser, showingContent, activeConfig]);
 
-  // Set action bar lock/unlock button
+  // Set action bar lock/unlock button and configurable keysym buttons
   useEffect(() => {
     if (showingContent && activeConfig && !viewOnly) {
-      const button = new ActionsBarButton({
+      const items: any[] = [];
+
+      // Lock/unlock button
+      const lockButton = new ActionsBarButton({
         icon: { iconName: locked ? 'lock' : 'unlock' },
         tooltip: locked ? 'Unlock remote desktop controls' : 'Lock remote desktop controls',
         onClick: () => setLocked(!locked),
         position: ActionsBarPosition.RIGHT,
       });
-      (button as any).color = locked ? 'default' : 'primary';
-      pluginApi.setActionsBarItems([button]);
+      (lockButton as any).color = locked ? 'default' : 'primary';
+      items.push(lockButton);
+
+      // Configurable buttons from settings
+      for (const btnConfig of buttons) {
+        const iconDef = resolveIcon(btnConfig.icon || 'grid-2x2');
+        const keysym = btnConfig.keysym;
+        const btn = new ActionsBarButton({
+          icon: iconDef.svgContent
+            ? { svgContent: iconDef.svgContent } as any
+            : { iconName: iconDef.iconName || 'settings' },
+          tooltip: btnConfig.label || 'Button',
+          onClick: () => {
+            if (rfbRef.current) {
+              // Temporarily disable viewOnly so sendKey isn't silently
+              // dropped — the lock controls direct mouse/keyboard interaction,
+              // but plugin-triggered keysyms should always go through.
+              const wasViewOnly = rfbRef.current._viewOnly;
+              rfbRef.current._viewOnly = false;
+              rfbRef.current.sendKey(keysym, null);
+              rfbRef.current._viewOnly = wasViewOnly;
+            }
+          },
+          position: ActionsBarPosition.RIGHT,
+        });
+        items.push(btn);
+      }
+
+      pluginApi.setActionsBarItems(items);
     } else {
       pluginApi.setActionsBarItems([]);
     }
-  }, [showingContent, activeConfig, locked, viewOnly]);
+  }, [showingContent, activeConfig, locked, viewOnly, buttons]);
 
   // Set options dropdown clipboard toggle
   useEffect(() => {

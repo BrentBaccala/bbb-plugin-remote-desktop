@@ -9,6 +9,7 @@ interface VncContentProps {
   locked: boolean;
   clipboardEnabled: boolean;
   reconnectCounter: number;
+  onRfbReady?: (rfb: any) => void;
 }
 
 export function VncContent({
@@ -18,11 +19,14 @@ export function VncContent({
   locked,
   clipboardEnabled,
   reconnectCounter,
+  onRfbReady,
 }: VncContentProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const clipboardTextRef = useRef('');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const onRfbReadyRef = useRef(onRfbReady);
+  onRfbReadyRef.current = onRfbReady;
 
   const reconnectRef = useRef(reconnectCounter);
 
@@ -110,9 +114,12 @@ export function VncContent({
     }
   };
 
-  const handleResize = useCallback(() => {
+  const handleConnect = useCallback(() => {
     if (playerRef.current?.rfb?._handleResize) {
       playerRef.current.rfb._handleResize();
+    }
+    if (onRfbReadyRef.current && playerRef.current?.rfb) {
+      onRfbReadyRef.current(playerRef.current.rfb);
     }
   }, []);
 
@@ -185,7 +192,7 @@ export function VncContent({
         background="transparent"
         url={url}
         credentials={{ password: password || '' }}
-        onConnect={handleResize}
+        onConnect={handleConnect}
         viewOnly={effectiveViewOnly}
         shared
         scaleViewport

@@ -22,6 +22,12 @@
       "type": "boolean",
       "required": false,
       "defaultValue": true
+    },
+    {
+      "name": "buttons",
+      "type": "json",
+      "required": false,
+      "defaultValue": []
     }
   ]
 }

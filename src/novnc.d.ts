@@ -15,6 +15,7 @@ declare module '@novnc/novnc/lib/rfb' {
     disconnect(): void;
     focus(): void;
     blur(): void;
+    sendKey(keysym: number, code: string | null, down?: boolean): void;
     clipboardPasteFrom(text: string): void;
     addEventListener(event: string, handler: (e?: any) => void): void;
     removeEventListener(event: string, handler: (e?: any) => void): void;
