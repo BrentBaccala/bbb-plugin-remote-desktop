@@ -46,7 +46,7 @@ public:
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `remoteDesktopUrl` | string | `""` | Default WebSocket URL pre-filled in the share dialog. If set, moderators can share with one click instead of typing a URL. |
-| `startLocked` | boolean | `true` | Whether the remote desktop starts in locked mode (viewers can see but not interact). Moderators can toggle lock/unlock at any time via the action bar button. |
+| `startLocked` | boolean | `true` | Whether the remote desktop starts in locked mode (users can see but not interact). Each user can toggle lock/unlock independently via the action bar button — this is a local setting that does not affect other users. |
 | `buttons` | array | `[]` | Action bar buttons that appear during an active remote desktop session. Each button sends a keysym to the VNC server when clicked. |
 
 ### Buttons
