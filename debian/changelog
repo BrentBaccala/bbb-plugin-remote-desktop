@@ -1,3 +1,10 @@
+bbb-plugin-remote-desktop (0.2.0-1) unstable; urgency=medium
+
+  * Add git commit hash to JS filename for browser cache busting
+  * Fix startLocked not reading from plugin settings (async load bug)
+
+ -- Brent Baccala <cosine@freesoft.org>  Thu, 13 Mar 2026 12:00:00 +0000
+
 bbb-plugin-remote-desktop (0.1.0-1) unstable; urgency=medium
 
   * Initial release.
