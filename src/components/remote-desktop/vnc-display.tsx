@@ -132,6 +132,18 @@ export default class VncDisplay extends Component<VncDisplayProps> {
 
     if (this.props.scaleViewport || this.props.clipViewport) {
       this.rfb._screen.style.overflow = 'hidden';
+      // Firefox can render scrollbars even with overflow:hidden on
+      // flex containers.  scrollbar-width:none is the reliable fix.
+      this.rfb._screen.style.scrollbarWidth = 'none';
+      // Patch _fixScrollbars to keep overflow hidden.  The original
+      // saves and restores _screen.style.overflow, but if anything
+      // resets it to 'auto' between calls, the restore perpetuates
+      // the unwanted value and scrollbars appear.
+      const rfb = this.rfb;
+      rfb._fixScrollbars = () => {
+        rfb._screen.style.overflow = 'hidden';
+        rfb._screen.getBoundingClientRect();
+      };
     }
 
     passthroughProperties.forEach((propertyName) => {
