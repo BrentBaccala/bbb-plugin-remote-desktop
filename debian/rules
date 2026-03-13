@@ -9,7 +9,7 @@ override_dh_auto_build:
 
 override_dh_auto_install:
 	install -d debian/bbb-plugin-remote-desktop/var/www/bigbluebutton-default/assets/plugins/remote-desktop/locales
-	install -m 644 dist/RemoteDesktop.js debian/bbb-plugin-remote-desktop/var/www/bigbluebutton-default/assets/plugins/remote-desktop/
+	install -m 644 dist/RemoteDesktop-*.js debian/bbb-plugin-remote-desktop/var/www/bigbluebutton-default/assets/plugins/remote-desktop/
 	install -m 644 dist/manifest.json debian/bbb-plugin-remote-desktop/var/www/bigbluebutton-default/assets/plugins/remote-desktop/
 	install -m 644 dist/locales/en.json debian/bbb-plugin-remote-desktop/var/www/bigbluebutton-default/assets/plugins/remote-desktop/locales/
 

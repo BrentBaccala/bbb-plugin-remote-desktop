@@ -1,14 +1,19 @@
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const { execSync } = require('child_process');
 const path = require('path');
+
+const gitHash = execSync('git rev-parse --short HEAD').toString().trim();
+const jsFilename = `RemoteDesktop-${gitHash}.js`;
 
 module.exports = {
   entry: './src/index.tsx',
   output: {
-    filename: 'RemoteDesktop.js',
+    filename: jsFilename,
     library: 'RemoteDesktop',
     libraryTarget: 'umd',
     publicPath: '/',
     globalObject: 'this',
+    clean: true,
   },
   experiments: {
     topLevelAwait: true,
@@ -58,7 +63,15 @@ module.exports = {
   plugins: [
     new CopyWebpackPlugin({
       patterns: [
-        { from: 'manifest.json', to: './' },
+        {
+          from: 'manifest.json',
+          to: './',
+          transform(content) {
+            const manifest = JSON.parse(content);
+            manifest.javascriptEntrypointUrl = jsFilename;
+            return JSON.stringify(manifest, null, 2) + '\n';
+          },
+        },
         { from: 'locales', to: './locales' },
       ],
     }),
