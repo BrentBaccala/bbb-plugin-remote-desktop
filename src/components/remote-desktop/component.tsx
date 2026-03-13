@@ -54,6 +54,13 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   const [activeConfig, setActiveConfig] = useState<RemoteDesktopConfig | null>(null);
   const [showingContent, setShowingContent] = useState(false);
   const [locked, setLocked] = useState(startLocked);
+  const settingsLoaded = useRef(false);
+  useEffect(() => {
+    if (settings && !settingsLoaded.current) {
+      settingsLoaded.current = true;
+      setLocked(startLocked);
+    }
+  }, [settings, startLocked]);
   const [clipboardEnabled, setClipboardEnabled] = useState(false);
   const [reconnectCounter, setReconnectCounter] = useState(0);
   // The noVNC RFB object lives inside VncContent, which is rendered in a
