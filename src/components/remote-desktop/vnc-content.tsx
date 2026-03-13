@@ -28,16 +28,8 @@ export function VncContent({
   const onRfbReadyRef = useRef(onRfbReady);
   onRfbReadyRef.current = onRfbReady;
 
-  const reconnectRef = useRef(reconnectCounter);
-
-  useEffect(() => {
-    if (reconnectCounter !== reconnectRef.current) {
-      reconnectRef.current = reconnectCounter;
-      if (playerRef.current) {
-        playerRef.current.connect();
-      }
-    }
-  }, [reconnectCounter]);
+  // Reconnect is handled by changing VncDisplay's key (below),
+  // which forces React to unmount/remount the component cleanly.
 
   const effectiveViewOnly = viewOnly || locked;
 
@@ -130,6 +122,7 @@ export function VncContent({
         width: '100%',
         height: '100%',
         position: 'relative',
+        overflow: 'hidden',
         background: 'var(--color-background, #06172A)',
       }}
       onFocus={() => { if (clipboardEnabled) transferClipboardText(); }}
@@ -187,6 +180,7 @@ export function VncContent({
       </button>
 
       <VncDisplay
+        key={reconnectCounter}
         width="100%"
         height="100%"
         background="transparent"
