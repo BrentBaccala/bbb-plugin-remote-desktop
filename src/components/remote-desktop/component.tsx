@@ -87,9 +87,13 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
         gc.currentElement === UiLayouts.GENERIC_CONTENT &&
         gc.genericContentId === genericContentId,
     );
+    if (isInPile !== wasShowingContent.current) {
+      console.log(`[RemoteDesktop] showingContent: ${wasShowingContent.current} → ${isInPile}, locked=${locked}, viewOnly=${viewOnly}, activeConfig=${!!activeConfig}`);
+    }
     // When content returns to the layout (e.g., after a screenshare ends),
     // force a VNC reconnect so noVNC picks up the current viewOnly state.
     if (isInPile && !wasShowingContent.current && activeConfig) {
+      console.log('[RemoteDesktop] content returned to layout, forcing VNC reconnect');
       setReconnectCounter((c) => c + 1);
     }
     wasShowingContent.current = isInPile;
@@ -133,6 +137,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
       const ids = pluginApi.setGenericContentItems([
         new GenericContentMainArea({
           contentFunction: (element: HTMLElement) => {
+            console.log('[RemoteDesktop] contentFunction called, element:', element.tagName, 'connected:', element.isConnected);
             const root = ReactDOM.createRoot(element);
             vncRootRef.current = root;
             renderVnc(root);
@@ -152,6 +157,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   // Re-render VncContent when locked/viewOnly/reconnect changes without recreating the connection
   useEffect(() => {
     if (vncRootRef.current && activeConfig) {
+      console.log(`[RemoteDesktop] re-render VncContent: viewOnly=${viewOnly}, locked=${locked}, reconnect=${reconnectCounter}, showingContent=${showingContent}`);
       renderVnc(vncRootRef.current);
     }
   }, [viewOnly, locked, clipboardEnabled, reconnectCounter, showingContent]);
