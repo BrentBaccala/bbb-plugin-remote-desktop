@@ -1,3 +1,10 @@
+bbb-plugin-remote-desktop (0.2.2-1) unstable; urgency=medium
+
+  * Force VNC reconnect when content returns to layout after screenshare
+  * Add debug logging for layout transitions and VNC re-renders
+
+ -- Brent Baccala <cosine@freesoft.org>  Mon, 17 Mar 2026 15:45:00 +0000
+
 bbb-plugin-remote-desktop (0.2.1-1) unstable; urgency=medium
 
   * Fix locked state reverting after screenshare ends
