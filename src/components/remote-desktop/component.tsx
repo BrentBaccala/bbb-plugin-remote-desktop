@@ -147,7 +147,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
     if (vncRootRef.current && activeConfig) {
       renderVnc(vncRootRef.current);
     }
-  }, [viewOnly, locked, clipboardEnabled, reconnectCounter]);
+  }, [viewOnly, locked, clipboardEnabled, reconnectCounter, showingContent]);
 
   // Set action button dropdown items
   useEffect(() => {
