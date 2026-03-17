@@ -80,12 +80,19 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   }) : true;
 
   // Track whether our generic content is in the layout pile
+  const wasShowingContent = useRef(false);
   useEffect(() => {
     const isInPile = currentLayout.some(
       (gc: any) =>
         gc.currentElement === UiLayouts.GENERIC_CONTENT &&
         gc.genericContentId === genericContentId,
     );
+    // When content returns to the layout (e.g., after a screenshare ends),
+    // force a VNC reconnect so noVNC picks up the current viewOnly state.
+    if (isInPile && !wasShowingContent.current && activeConfig) {
+      setReconnectCounter((c) => c + 1);
+    }
+    wasShowingContent.current = isInPile;
     setShowingContent(isInPile);
   }, [currentLayout, genericContentId]);
 
