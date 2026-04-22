@@ -1,3 +1,15 @@
+bbb-plugin-remote-desktop (0.2.3-1) unstable; urgency=medium
+
+  * Skip the force-reconnect on initial content entry to layout. The
+    force-reconnect was firing on every fresh page load (not only on
+    post-screenshare re-entry), producing two back-to-back websocket
+    opens — one from the initial VncDisplay mount, one from the key
+    change to 1. That double-connect raced websockify's check-and-spawn
+    and, for moderator/teacher sessions, also raced two inetd
+    teacher_desktop sessions on the same X display.
+
+ -- Brent Baccala <cosine@freesoft.org>  Wed, 22 Apr 2026 23:30:00 +0000
+
 bbb-plugin-remote-desktop (0.2.2-1) unstable; urgency=medium
 
   * Force VNC reconnect when content returns to layout after screenshare

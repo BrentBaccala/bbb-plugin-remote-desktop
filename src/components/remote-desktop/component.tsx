@@ -81,6 +81,17 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
 
   // Track whether our generic content is in the layout pile
   const wasShowingContent = useRef(false);
+  // Distinguish the initial mount (when content first enters the layout —
+  // VncContent is about to be rendered for the first time, no VNC connection
+  // yet exists) from subsequent re-entries (after a screenshare interrupted
+  // and the layout swapped our content out, then back in). Only the latter
+  // case needs a forced reconnect; on the initial mount, incrementing
+  // reconnectCounter causes VncDisplay's `key` to change from 0 to 1,
+  // React treats that as unmount-then-remount, and the server sees two
+  // back-to-back websocket opens — which races websockify's check-and-spawn
+  // even with server-side locking in place (teacher_desktop inetd spawn
+  // is not covered by that lock).
+  const hasEverShownContent = useRef(false);
   useEffect(() => {
     const isInPile = currentLayout.some(
       (gc: any) =>
@@ -90,12 +101,15 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
     if (isInPile !== wasShowingContent.current) {
       console.log(`[RemoteDesktop] showingContent: ${wasShowingContent.current} → ${isInPile}, locked=${locked}, viewOnly=${viewOnly}, activeConfig=${!!activeConfig}`);
     }
-    // When content returns to the layout (e.g., after a screenshare ends),
-    // force a VNC reconnect so noVNC picks up the current viewOnly state.
-    if (isInPile && !wasShowingContent.current && activeConfig) {
+    // When content RETURNS to the layout (after a prior removal, e.g. a
+    // screenshare replaced us and then ended), force a VNC reconnect so
+    // noVNC picks up the current viewOnly state. Skip this on the first
+    // appearance — nothing to reconnect yet.
+    if (isInPile && !wasShowingContent.current && hasEverShownContent.current && activeConfig) {
       console.log('[RemoteDesktop] content returned to layout, forcing VNC reconnect');
       setReconnectCounter((c) => c + 1);
     }
+    if (isInPile) hasEverShownContent.current = true;
     wasShowingContent.current = isInPile;
     setShowingContent(isInPile);
   }, [currentLayout, genericContentId]);
