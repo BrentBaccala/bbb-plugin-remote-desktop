@@ -7,6 +7,15 @@ Files: *
 Copyright: 2026 Brent Baccala <cosine@freesoft.org>
 License: MIT
 
+Files: bbb-wss-proxy/*
+Copyright: 2026 Brent Baccala <cosine@freesoft.org>
+License: MIT
+Comment:
+ bbb-wss-proxy is a thin wrapper around the websockify library; it
+ imports websockify at runtime but does not bundle it. websockify
+ itself is LGPL-3.0 and is installed separately via the python3-websockify
+ Debian package (declared as a runtime dependency, not bundled).
+
 Files: debian/*
 Copyright: 2026 Brent Baccala <cosine@freesoft.org>
 License: MIT

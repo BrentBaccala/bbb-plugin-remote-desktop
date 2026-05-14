@@ -42,6 +42,9 @@ The plugin is a pure browser-side client. You need a WebSocket-capable
 VNC endpoint reachable from participants' browsers. A typical setup
 is one of:
 
+- **`bbb-wss-proxy`** — a companion package shipped from the same
+  source as this plugin (see below). The fastest path if your VNC
+  server lives on the BBB host itself.
 - **`x11vnc` (or `Xtigervnc`, `TigerVNC`) + `websockify`** behind a
   TLS reverse proxy on the same host as your BBB server, exposed at
   `wss://your-bbb-host/vnc` (or similar).
@@ -49,12 +52,50 @@ is one of:
   TigerVNC builds with `-rfbport` / `-websocketsPort`).
 - **A noVNC deployment** in front of any standard VNC server.
 
-The plugin does not include any server-side component. See
-https://novnc.com for setup guidance.
+The plugin itself does not include any server-side component beyond
+the optional `bbb-wss-proxy`. See https://novnc.com for general
+WebSocket-VNC setup guidance.
 
 Note: the URL must be `wss://` (not `ws://`) — the plugin enforces
 this in the share dialog because BBB itself runs over HTTPS and
 browsers will block mixed content.
+
+### bbb-wss-proxy (optional companion package)
+
+`bbb-wss-proxy` is a small Python wrapper around websockify that
+authenticates incoming WebSocket connections against BigBlueButton's
+own `securitySalt`, then relays them to a backend VNC server. It
+ships in the same source package as the plugin (one `dpkg-buildpackage`
+produces both `.deb`s).
+
+After installing `bbb-wss-proxy_*.deb` alongside the plugin, a
+moderator's share URL becomes:
+
+    wss://<your-bbb-host>/proxy/<jwt>
+
+where `<jwt>` is a JWT signed with the BBB `securitySalt`. The proxy
+relays anything that authenticates to `localhost:5900` by default;
+set `DEFAULT_TARGET` in `/etc/default/bbb-wss-proxy` to point
+elsewhere, or set `ALLOWED_TARGETS` (a regex) to let the moderator
+pick a target via the `?target=host:port` query parameter.
+
+Files installed by the package:
+
+| Path | Purpose |
+|------|---------|
+| `/usr/share/bbb-wss-proxy/bin/bbb-wss-proxy` | the proxy daemon |
+| `/usr/lib/systemd/system/bbb-wss-proxy.service` | systemd unit (runs as `bigbluebutton`) |
+| `/etc/default/bbb-wss-proxy` | `SOURCE`, `DEFAULT_TARGET`, `ALLOWED_TARGETS` |
+| `/etc/bigbluebutton/nginx/bbb-wss-proxy.nginx` | nginx `location /proxy/` block |
+
+Reload nginx after install (`systemctl reload nginx`) for the
+`/proxy/` location to take effect; the postinst does this when
+nginx is already running.
+
+The proxy is **optional** — if you already have a WebSocket VNC
+endpoint reachable from participant browsers, you can install just
+`bbb-plugin-remote-desktop` and point its share dialog at your
+existing endpoint.
 
 ## Installation
 

@@ -8,9 +8,19 @@ override_dh_auto_build:
 	npm run build
 
 override_dh_auto_install:
+	# bbb-plugin-remote-desktop
 	install -d debian/bbb-plugin-remote-desktop/var/www/bigbluebutton-default/assets/plugins/remote-desktop/locales
 	install -m 644 dist/RemoteDesktop-*.js debian/bbb-plugin-remote-desktop/var/www/bigbluebutton-default/assets/plugins/remote-desktop/
 	install -m 644 dist/manifest.json debian/bbb-plugin-remote-desktop/var/www/bigbluebutton-default/assets/plugins/remote-desktop/
 	install -m 644 dist/locales/en.json debian/bbb-plugin-remote-desktop/var/www/bigbluebutton-default/assets/plugins/remote-desktop/locales/
+	# bbb-wss-proxy
+	install -d debian/bbb-wss-proxy/usr/share/bbb-wss-proxy/bin
+	install -m 755 bbb-wss-proxy/bbb-wss-proxy debian/bbb-wss-proxy/usr/share/bbb-wss-proxy/bin/
+	install -d debian/bbb-wss-proxy/usr/lib/systemd/system
+	install -m 644 bbb-wss-proxy/bbb-wss-proxy.service debian/bbb-wss-proxy/usr/lib/systemd/system/
+	install -d debian/bbb-wss-proxy/etc/bigbluebutton/nginx
+	install -m 644 bbb-wss-proxy/bbb-wss-proxy.nginx debian/bbb-wss-proxy/etc/bigbluebutton/nginx/
+	install -d debian/bbb-wss-proxy/etc/default
+	install -m 644 bbb-wss-proxy/bbb-wss-proxy.default debian/bbb-wss-proxy/etc/default/bbb-wss-proxy
 
 override_dh_auto_test:

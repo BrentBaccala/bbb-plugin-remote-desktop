@@ -6,7 +6,10 @@ dist-tsc/
 *.buildinfo
 *.changes
 debian/.debhelper/
+debian/*.debhelper
 debian/bbb-plugin-remote-desktop/
 debian/bbb-plugin-remote-desktop.substvars
+debian/bbb-wss-proxy/
+debian/bbb-wss-proxy.substvars
 debian/debhelper-build-stamp
 debian/files

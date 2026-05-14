@@ -1,0 +1,22 @@
+[Unit]
+Description=WebSocket proxy for BigBlueButton VNC service
+Requires=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/usr/share/bbb-wss-proxy
+EnvironmentFile=/etc/default/bbb-wss-proxy
+ExecStart=/usr/share/bbb-wss-proxy/bin/bbb-wss-proxy
+TimeoutStopSec=5
+
+# Run as the bigbluebutton user so the service can read
+# bigbluebutton.properties (which contains securitySalt) under its
+# normal 640 mode, without granting the process full root. If the
+# VNC target requires privileged access (Unix-socket VNC owned by
+# another user, for example), drop a systemd override that sets
+# User=root instead.
+User=bigbluebutton
+Group=bigbluebutton
+
+[Install]
+WantedBy=multi-user.target

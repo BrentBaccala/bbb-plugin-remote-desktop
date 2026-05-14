@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+case "$1" in
+    configure)
+        # Reload nginx so it picks up /etc/bigbluebutton/nginx/bbb-wss-proxy.nginx.
+        if [ -d /etc/bigbluebutton/nginx ] && command -v nginx >/dev/null; then
+            if systemctl is-active --quiet nginx; then
+                systemctl reload nginx || true
+            fi
+        fi
+        ;;
+esac
+
+#DEBHELPER#

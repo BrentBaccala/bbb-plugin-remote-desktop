@@ -8,6 +8,23 @@ Package: bbb-plugin-remote-desktop
 Architecture: all
 Depends: ${misc:Depends}
 Description: BigBlueButton remote desktop plugin
- Adds VNC remote desktop sharing to BigBlueButton v3.0 via the plugin
- architecture. Moderators can share a VNC desktop in the presentation
- area. No core BBB modifications required.
+ Adds VNC remote desktop sharing to BigBlueButton v3.0 via the
+ plugin architecture. Moderators can share a VNC desktop in the
+ presentation area; participants see and (optionally) interact with
+ it through their browser. No core BBB modifications required.
+
+Package: bbb-wss-proxy
+Architecture: all
+Depends: ${misc:Depends}, python3, python3-jwt, python3-websockify, nginx
+Description: WebSocket-to-VNC proxy with BigBlueButton JWT authentication
+ A websockify wrapper that authenticates incoming WebSocket
+ connections against BigBlueButton's JWT shared secret
+ (securitySalt) before relaying them to a backend VNC server.
+ .
+ Pairs with bbb-plugin-remote-desktop to give a BBB host a turnkey
+ VNC entry point reachable at wss://<bbb-host>/proxy/{jwt}, with
+ the BBB user authentication piggy-backing on BBB's own auth.
+ .
+ An optional ALLOWED_TARGETS regex lets the caller pick a VNC
+ backend by query parameter (default: relay everything to
+ localhost:5900).
