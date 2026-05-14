@@ -89,8 +89,9 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   // reconnectCounter causes VncDisplay's `key` to change from 0 to 1,
   // React treats that as unmount-then-remount, and the server sees two
   // back-to-back websocket opens — which races websockify's check-and-spawn
-  // even with server-side locking in place (teacher_desktop inetd spawn
-  // is not covered by that lock).
+  // (and, for VNC servers that spawn a session per connection, the
+  // per-connection spawn mechanism upstream of websockify, which the
+  // websockify-level lock does not cover).
   const hasEverShownContent = useRef(false);
   useEffect(() => {
     const isInPile = currentLayout.some(

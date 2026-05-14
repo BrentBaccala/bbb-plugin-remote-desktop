@@ -77,9 +77,23 @@ const pluginIcons: Record<string, React.ReactElement> = {
   ),
 };
 
+function isImageRef(s: string): boolean {
+  return /^(https?:)?\/\//.test(s)
+      || s.startsWith('/')
+      || s.startsWith('data:')
+      || /\.(png|jpe?g|gif|svg|webp|ico)(\?.*)?$/i.test(s);
+}
+
 export function resolveIcon(name: string): { svgContent?: React.ReactElement; iconName?: string } {
   if (name in pluginIcons) {
     return { svgContent: pluginIcons[name] };
+  }
+  if (isImageRef(name)) {
+    return {
+      svgContent: (
+        <img src={name} alt="" width="24" height="24" />
+      ),
+    };
   }
   return { iconName: name };
 }
