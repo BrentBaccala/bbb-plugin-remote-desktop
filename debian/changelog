@@ -1,3 +1,24 @@
+bbb-plugin-remote-desktop (0.3.0-1) unstable; urgency=medium
+
+  * Source package now builds a second binary, bbb-wss-proxy: a
+    WebSocket-to-VNC gateway that authenticates incoming connections
+    against BBB's session-token API (/bigbluebutton/api/enter). The
+    plugin automatically appends the user's session token to every
+    share URL, so any user authenticated to a meeting reaches the
+    VNC backend with valid credentials and no separate sign-in.
+  * Action-bar buttons can now use custom PNG/SVG/JPEG/GIF/WebP
+    images or data URIs as icons, in addition to the built-in
+    plugin icons and BBB stock icons. URL-shaped values (containing
+    "://", leading "/", "data:", or an image-file extension) are
+    rendered as a 24x24 <img>.
+  * README rewritten for a general (non-collaborate) audience:
+    use-case framing, server-side requirements, operator-selector
+    documentation, clipboard-sharing documentation, custom-icon
+    examples, and an "optional bbb-wss-proxy" install section.
+  * Add MIT LICENSE and DEP-5 debian/copyright.
+
+ -- Brent Baccala <cosine@freesoft.org>  Thu, 14 May 2026 04:23:44 +0000
+
 bbb-plugin-remote-desktop (0.2.3-1) unstable; urgency=medium
 
   * Skip the force-reconnect on initial content entry to layout. The
