@@ -2,6 +2,7 @@
   "name": "bbb-plugin-remote-desktop",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "main": "./src/index.tsx",
   "scripts": {
     "build": "webpack --mode production",
