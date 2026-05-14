@@ -9,12 +9,12 @@ EnvironmentFile=/etc/default/bbb-wss-proxy
 ExecStart=/usr/share/bbb-wss-proxy/bin/bbb-wss-proxy
 TimeoutStopSec=5
 
-# Run as the bigbluebutton user so the service can read
-# bigbluebutton.properties (which contains securitySalt) under its
-# normal 640 mode, without granting the process full root. If the
-# VNC target requires privileged access (Unix-socket VNC owned by
+# Run as the bigbluebutton user — consistent with the rest of BBB,
+# no privilege beyond what's needed for an outbound HTTP call to
+# bbb-web and a TCP connection to the VNC backend. If the VNC
+# target requires privileged access (Unix-socket VNC owned by
 # another user, for example), drop a systemd override that sets
-# User=root instead.
+# User=root.
 User=bigbluebutton
 Group=bigbluebutton
 

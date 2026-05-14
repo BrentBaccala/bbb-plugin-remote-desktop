@@ -1,72 +1,81 @@
 #!/usr/bin/python3
 
-# A customized version of websockify that uses the websockify library
-# but replaces one method call to allow VNC WebSocket connections to
-# be authenticated with a JSON Web Token issued by BigBlueButton,
-# then relays them to a destination VNC server.
+# Authenticating WebSocket-to-VNC proxy for BigBlueButton.
 #
-# This means only authenticated BBB users can use the proxy.
+# Wraps websockify with a session-token check: an incoming connection
+# must carry a BigBlueButton session token as ?sessionToken=... in
+# the WebSocket URL, and that token must validate against bbb-web's
+# /bigbluebutton/api/enter endpoint before the proxy relays to a
+# backend VNC server.
 #
-# The URL must be in the form:
+# This pairs with bbb-plugin-remote-desktop, which appends
+# ?sessionToken=<token> to every WebSocket URL via the BBB plugin
+# SDK's getSessionToken(). Any BBB user authenticated to a meeting
+# therefore reaches the proxy with valid credentials, with no
+# separate sign-in.
 #
-#      wss://BBB_SERVER/proxy/{jwt}
-#  or  wss://BBB_SERVER/proxy/{jwt}?target=HOST:PORT
+# URL shape (the leading /proxy/ is stripped by nginx):
 #
-# where {jwt} is a JSON Web Token signed with BBB's securitySalt.
+#      wss://BBB_SERVER/proxy/?sessionToken=<token>
+#  or  wss://BBB_SERVER/proxy/?sessionToken=<token>&target=HOST:PORT
 #
-# A regular expression can be specified in the ALLOWED_TARGETS
-# environment variable to allow the host and port (which must match
-# the regular expression) to be specified in the URL query parameters
-# as shown. This form of the URL is only permitted if ALLOWED_TARGETS
-# has been set.
-#
-# Websockify has plugins for token processing, but the plugin only has
-# access to the token in the query string, not the entire query
-# string, so we can't use that feature.
+# The second form requires ALLOWED_TARGETS (a regex) to be set in
+# /etc/default/bbb-wss-proxy.
 
 import sys
 import os
 import re
 import urllib
-import jwt
+import urllib.request
+import xml.etree.ElementTree as ET
 
 from websockify import websocketproxy
 from websockify.websocketproxy import ProxyRequestHandler
 
-# Extract the BBB API key (securitySalt) from PROP_FILE.
-#
-# We parse the file with a regular expression rather than pulling in
-# pyjavaproperties, to keep the runtime dependency surface small.
+BBB_WEB_URL = os.environ.get('BBB_WEB_URL', 'http://localhost:8080')
 
-PROP_FILE = "/usr/share/bbb-web/WEB-INF/classes/bigbluebutton.properties"
 
-def securitySalt():
-    with open(PROP_FILE) as file:
-        for line in file:
-            match = re.match(r'securitySalt=(.*)', line)
-            if match:
-                return match.group(1)
-    return None
+def validate_session_token(token):
+    """Return True iff bbb-web reports SUCCESS for the given session token."""
+    url = '{0}/bigbluebutton/api/enter?sessionToken={1}'.format(
+        BBB_WEB_URL, urllib.parse.quote(token))
+    try:
+        with urllib.request.urlopen(url, timeout=5) as response:
+            root = ET.fromstring(response.read())
+            return root.findtext('returncode') == 'SUCCESS'
+    except Exception:
+        return False
+
 
 old_new_websocket_client = ProxyRequestHandler.new_websocket_client
 
 allowed_targets = None
 
-def new_websocket_client(self):
 
+def new_websocket_client(self):
     try:
         url = urllib.parse.urlparse(self.path)
-        JWT = url.path[1:]
         querydict = urllib.parse.parse_qs(url.query)
-        jwt.decode(JWT, securitySalt(), algorithms=["HS256"])
-    except (jwt.PyJWTError, KeyError, IndexError) as ex:
+
+        token_list = querydict.get('sessionToken')
+        if not token_list:
+            self.log_message('No sessionToken in query string')
+            self.send_response(401, 'Unauthorized')
+            self.end_headers()
+            return
+
+        if not validate_session_token(token_list[0]):
+            self.log_message('Invalid BBB session token')
+            self.send_response(401, 'Unauthorized')
+            self.end_headers()
+            return
+    except Exception as ex:
         self.log_message(repr(ex))
         self.send_response(401, 'Unauthorized')
         self.end_headers()
         return
 
     # Use the defaults specified on the command line unless overridden by URL.
-
     if 'target' in querydict:
         target = querydict['target'][0]
         if allowed_targets and re.match(allowed_targets, target):
@@ -82,7 +91,9 @@ def new_websocket_client(self):
     # Pass through to the "parent" class's version of this method.
     old_new_websocket_client(self)
 
+
 ProxyRequestHandler.new_websocket_client = new_websocket_client
+
 
 if __name__ == '__main__':
 

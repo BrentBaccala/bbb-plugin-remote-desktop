@@ -15,15 +15,17 @@ Description: BigBlueButton remote desktop plugin
 
 Package: bbb-wss-proxy
 Architecture: all
-Depends: ${misc:Depends}, python3, python3-jwt, python3-websockify, nginx
-Description: WebSocket-to-VNC proxy with BigBlueButton JWT authentication
+Depends: ${misc:Depends}, python3, python3-websockify, nginx
+Description: WebSocket-to-VNC proxy with BigBlueButton session-token auth
  A websockify wrapper that authenticates incoming WebSocket
- connections against BigBlueButton's JWT shared secret
- (securitySalt) before relaying them to a backend VNC server.
+ connections against BigBlueButton's own session-token API
+ (/bigbluebutton/api/enter) before relaying them to a backend VNC
+ server.
  .
- Pairs with bbb-plugin-remote-desktop to give a BBB host a turnkey
- VNC entry point reachable at wss://<bbb-host>/proxy/{jwt}, with
- the BBB user authentication piggy-backing on BBB's own auth.
+ Pairs with bbb-plugin-remote-desktop, which appends each user's
+ BBB session token as ?sessionToken=... to the WebSocket URL. Any
+ user authenticated to a meeting therefore reaches the proxy with
+ valid credentials — no separate sign-in.
  .
  An optional ALLOWED_TARGETS regex lets the caller pick a VNC
  backend by query parameter (default: relay everything to

@@ -35,6 +35,10 @@ screenshare falls short.
 - Configurable action-bar buttons that send X11 keysyms to the VNC
   server
 - Survives screenshare interruptions and reconnects
+- Forwards each user's BBB authentication to the VNC backend — when
+  paired with an auth-aware gateway (such as `bbb-wss-proxy`),
+  any user already authenticated to the meeting reaches the
+  backend with valid credentials, no separate sign-in
 
 ## Server-side requirements
 
@@ -43,61 +47,32 @@ VNC endpoint reachable from participants' browsers. A typical setup
 is one of:
 
 - **`bbb-wss-proxy`** — a companion package shipped from the same
-  source as this plugin (see below). The fastest path if your VNC
-  server lives on the BBB host itself.
+  source as this plugin (see [Installation](#bbb-wss-proxy-optional)).
+  The fastest path if your VNC server lives on the BBB host itself.
 - **`x11vnc` (or `Xtigervnc`, `TigerVNC`) + `websockify`** behind a
   TLS reverse proxy on the same host as your BBB server, exposed at
   `wss://your-bbb-host/vnc` (or similar).
 - **A VNC server with native WebSocket support** (e.g., recent
   TigerVNC builds with `-rfbport` / `-websocketsPort`).
-- **A noVNC deployment** in front of any standard VNC server.
+- **The [collaborate](https://github.com/BrentBaccala/collaborate)
+  package suite** — a fuller turnkey deployment built around this
+  plugin. Adds per-user on-demand Xtigervnc desktops, JWT-issued
+  login URLs (`bbb-mklogin`), a GNOME-based default desktop, and
+  AWS hibernate integration. Heavier than just running the plugin
+  against a single VNC server, but appropriate if you want
+  per-participant desktops rather than one shared desktop.
 
 The plugin itself does not include any server-side component beyond
-the optional `bbb-wss-proxy`. See https://novnc.com for general
-WebSocket-VNC setup guidance.
+the optional `bbb-wss-proxy`; for the manual setups above, see the
+[websockify](https://github.com/novnc/websockify) project's docs.
 
 Note: the URL must be `wss://` (not `ws://`) — the plugin enforces
 this in the share dialog because BBB itself runs over HTTPS and
 browsers will block mixed content.
 
-### bbb-wss-proxy (optional companion package)
-
-`bbb-wss-proxy` is a small Python wrapper around websockify that
-authenticates incoming WebSocket connections against BigBlueButton's
-own `securitySalt`, then relays them to a backend VNC server. It
-ships in the same source package as the plugin (one `dpkg-buildpackage`
-produces both `.deb`s).
-
-After installing `bbb-wss-proxy_*.deb` alongside the plugin, a
-moderator's share URL becomes:
-
-    wss://<your-bbb-host>/proxy/<jwt>
-
-where `<jwt>` is a JWT signed with the BBB `securitySalt`. The proxy
-relays anything that authenticates to `localhost:5900` by default;
-set `DEFAULT_TARGET` in `/etc/default/bbb-wss-proxy` to point
-elsewhere, or set `ALLOWED_TARGETS` (a regex) to let the moderator
-pick a target via the `?target=host:port` query parameter.
-
-Files installed by the package:
-
-| Path | Purpose |
-|------|---------|
-| `/usr/share/bbb-wss-proxy/bin/bbb-wss-proxy` | the proxy daemon |
-| `/usr/lib/systemd/system/bbb-wss-proxy.service` | systemd unit (runs as `bigbluebutton`) |
-| `/etc/default/bbb-wss-proxy` | `SOURCE`, `DEFAULT_TARGET`, `ALLOWED_TARGETS` |
-| `/etc/bigbluebutton/nginx/bbb-wss-proxy.nginx` | nginx `location /proxy/` block |
-
-Reload nginx after install (`systemctl reload nginx`) for the
-`/proxy/` location to take effect; the postinst does this when
-nginx is already running.
-
-The proxy is **optional** — if you already have a WebSocket VNC
-endpoint reachable from participant browsers, you can install just
-`bbb-plugin-remote-desktop` and point its share dialog at your
-existing endpoint.
-
 ## Installation
+
+### bbb-plugin-remote-desktop
 
 Install the Debian package on the BBB server:
 
@@ -114,6 +89,35 @@ a no-op once the upstream change is merged — see
 
 After installation, run `bbb-conf --restart` to pick up the new
 plugin in `bbb-web`.
+
+### bbb-wss-proxy (optional)
+
+`bbb-wss-proxy` is a small Python wrapper around websockify that
+authenticates incoming WebSocket connections against BigBlueButton's
+own session-token API, then relays them to a backend VNC server. It
+ships in the same source package as the plugin (one
+`dpkg-buildpackage` produces both `.deb`s).
+
+```bash
+sudo dpkg -i bbb-wss-proxy_*.deb
+```
+
+Once installed, a moderator's share URL is simply:
+
+    wss://<your-bbb-host>/proxy/
+
+The proxy relays anything that authenticates to `localhost:5900`
+by default; set `DEFAULT_TARGET` in `/etc/default/bbb-wss-proxy` to
+point elsewhere, or set `ALLOWED_TARGETS` (a regex) to let the
+moderator pick a target via the `?target=host:port` query
+parameter. With `ALLOWED_TARGETS` enabled, a share URL might be:
+
+    wss://<your-bbb-host>/proxy/?target=192.168.1.50:5901
+
+The proxy is **optional** — if you already have a WebSocket VNC
+endpoint reachable from participant browsers, you can install just
+`bbb-plugin-remote-desktop` and point its share dialog at your
+existing endpoint.
 
 ## Sharing a desktop (moderator workflow)
 
@@ -278,8 +282,9 @@ A clipboard toggle appears in the action-bar "Set options" dropdown
 during an active session. When enabled (per user), text copied on
 the remote desktop is written to the browser's clipboard, and text
 copied locally is sent to the remote desktop. Clipboard sharing is
-off by default and must be explicitly enabled by each user — there
-is no global setting to force it on or off.
+off by default and must be explicitly enabled by each user in each
+session — there is no global setting to force it on and it is not
+retained between sessions.
 
 Browsers require a user gesture before granting clipboard access; on
 first use the browser may prompt for permission.
