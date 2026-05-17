@@ -1,3 +1,21 @@
+bbb-plugin-remote-desktop (0.3.0-2) unstable; urgency=medium
+
+  * bbb-wss-proxy: fix session-token validation on BigBlueButton 3.0.
+    The 0.3.0-1 proxy validated tokens against /bigbluebutton/api/enter,
+    which was removed in BBB 3.0 (returns 404), so every connection was
+    rejected with "Invalid BBB session token". Validation now uses
+    /bigbluebutton/connection/legacyCheckAuthorization, the stateless
+    3.0 equivalent (checks the token maps to a known meeting
+    UserSession; no grails HTTP-session cookie required, unlike
+    checkAuthorization / checkGraphqlAuthorization). The token is now
+    passed in the x-original-uri header per BBB's nginx auth_request
+    convention rather than as a query parameter.
+  * bbb-wss-proxy: default BBB_WEB_URL is now http://localhost:8090.
+    BBB 3.0 runs bbb-web on port 8090; the previous 8080 default was a
+    2.x assumption and never connected on a stock 3.0 host.
+
+ -- Brent Baccala <cosine@freesoft.org>  Sun, 17 May 2026 23:32:31 +0000
+
 bbb-plugin-remote-desktop (0.3.0-1) unstable; urgency=medium
 
   * Source package now builds a second binary, bbb-wss-proxy: a

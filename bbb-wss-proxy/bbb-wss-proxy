@@ -5,8 +5,13 @@
 # Wraps websockify with a session-token check: an incoming connection
 # must carry a BigBlueButton session token as ?sessionToken=... in
 # the WebSocket URL, and that token must validate against bbb-web's
-# /bigbluebutton/api/enter endpoint before the proxy relays to a
-# backend VNC server.
+# /bigbluebutton/connection/legacyCheckAuthorization endpoint before
+# the proxy relays to a backend VNC server. (BBB 2.x exposed
+# /bigbluebutton/api/enter for this; it was removed in BBB 3.0.
+# legacyCheckAuthorization is the stateless equivalent — it checks
+# only that the token maps to a known meeting UserSession, with no
+# dependence on a grails HTTP session cookie, which is what the
+# checkAuthorization / checkGraphqlAuthorization endpoints require.)
 #
 # This pairs with bbb-plugin-remote-desktop, which appends
 # ?sessionToken=<token> to every WebSocket URL via the BBB plugin
@@ -27,22 +32,33 @@ import os
 import re
 import urllib
 import urllib.request
-import xml.etree.ElementTree as ET
 
 from websockify import websocketproxy
 from websockify.websocketproxy import ProxyRequestHandler
 
-BBB_WEB_URL = os.environ.get('BBB_WEB_URL', 'http://localhost:8080')
+# BBB 3.0 runs bbb-web on port 8090 (2.x used 8080).
+BBB_WEB_URL = os.environ.get('BBB_WEB_URL', 'http://localhost:8090')
 
 
 def validate_session_token(token):
-    """Return True iff bbb-web reports SUCCESS for the given session token."""
-    url = '{0}/bigbluebutton/api/enter?sessionToken={1}'.format(
-        BBB_WEB_URL, urllib.parse.quote(token))
+    """Return True iff bbb-web accepts the given session token.
+
+    Uses the legacyCheckAuthorization endpoint, which validates the
+    token statelessly (it only checks that the token maps to a known
+    meeting UserSession). The token is supplied in the x-original-uri
+    header — the same nginx auth_request convention bbb-web uses
+    internally — not as a query parameter. A valid token yields HTTP
+    200; anything else (404, 401, connection failure) raises or
+    returns non-200 and is treated as invalid.
+    """
+    url = '{0}/bigbluebutton/connection/legacyCheckAuthorization'.format(
+        BBB_WEB_URL)
+    req = urllib.request.Request(url)
+    req.add_header('x-original-uri',
+                   '/?sessionToken={0}'.format(urllib.parse.quote(token)))
     try:
-        with urllib.request.urlopen(url, timeout=5) as response:
-            root = ET.fromstring(response.read())
-            return root.findtext('returncode') == 'SUCCESS'
+        with urllib.request.urlopen(req, timeout=5) as response:
+            return response.status == 200
     except Exception:
         return False
 

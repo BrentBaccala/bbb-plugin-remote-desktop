@@ -6,11 +6,11 @@ SOURCE=localhost:6101
 DEFAULT_TARGET=localhost:5900
 
 # bbb-web base URL — used to validate incoming sessionToken values
-# against /bigbluebutton/api/enter. The default is correct for a
-# standard single-host BBB deployment; override if bbb-web listens
-# elsewhere.
+# against /bigbluebutton/connection/legacyCheckAuthorization. The
+# default is correct for a standard single-host BBB 3.0 deployment
+# (bbb-web listens on 8090); override if bbb-web listens elsewhere.
 #
-# BBB_WEB_URL=http://localhost:8080
+# BBB_WEB_URL=http://localhost:8090
 
 # Allow the proxy user to override the target by specifying a regular
 # expression here that matches the allowed values for 'target' in
