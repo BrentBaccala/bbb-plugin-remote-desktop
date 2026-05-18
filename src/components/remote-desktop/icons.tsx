@@ -84,16 +84,62 @@ function isImageRef(s: string): boolean {
       || /\.(png|jpe?g|gif|svg|webp|ico)(\?.*)?$/i.test(s);
 }
 
-export function resolveIcon(name: string): { svgContent?: React.ReactElement; iconName?: string } {
-  if (name in pluginIcons) {
-    return { svgContent: pluginIcons[name] };
+function letterIcon(ch: string): React.ReactElement {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      style={{ display: 'block' }}
+    >
+      <text
+        x="12"
+        y="13"
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize="18"
+        fontFamily="sans-serif"
+        fill="currentColor"
+      >
+        {ch}
+      </text>
+    </svg>
+  );
+}
+
+export function resolveIcon(
+  name: string | undefined,
+  opts: { label?: string; alt?: string } = {},
+): { svgContent?: React.ReactElement; iconName?: string } {
+  if (name) {
+    if (name in pluginIcons) {
+      return { svgContent: pluginIcons[name] };
+    }
+    if (isImageRef(name)) {
+      // alt: the button config's `alt`, falling back to `label`. The
+      // enclosing action-bar button already has an accessible name
+      // from the tooltip, so an empty alt here is valid ARIA (the
+      // image is decorative); a provided alt refines it. display:block
+      // avoids inline-image baseline whitespace collapsing the icon.
+      const alt = opts.alt || opts.label || '';
+      return {
+        svgContent: (
+          <img
+            src={name}
+            alt={alt}
+            width="24"
+            height="24"
+            style={{ display: 'block', width: 24, height: 24 }}
+          />
+        ),
+      };
+    }
+    // A BBB stock icon name.
+    return { iconName: name };
   }
-  if (isImageRef(name)) {
-    return {
-      svgContent: (
-        <img src={name} alt="" width="24" height="24" />
-      ),
-    };
-  }
-  return { iconName: name };
+  // No icon configured: derive a single-letter glyph from the label,
+  // then the alt; blank if neither is set.
+  const ch = (opts.label || opts.alt || '').trim().charAt(0);
+  return { svgContent: ch ? letterIcon(ch) : <></> };
 }

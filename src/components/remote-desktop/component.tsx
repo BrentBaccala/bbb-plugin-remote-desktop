@@ -231,7 +231,10 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
 
       // Configurable buttons from settings
       for (const btnConfig of buttons) {
-        const iconDef = resolveIcon(btnConfig.icon || 'grid-2x2');
+        const iconDef = resolveIcon(btnConfig.icon, {
+          label: btnConfig.label,
+          alt: btnConfig.alt,
+        });
         const keysym = btnConfig.keysym;
         const btn = new ActionsBarButton({
           icon: iconDef.svgContent

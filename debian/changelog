@@ -1,3 +1,21 @@
+bbb-plugin-remote-desktop (0.3.0-3) unstable; urgency=medium
+
+  * Custom-image action-bar button icons: the <img> rendered for a
+    URL/path/data-URI icon now takes its alt text from a new optional
+    `alt` field on the button config (falling back to `label`), and is
+    given display:block + explicit 24x24 sizing so it can't collapse
+    in the action bar. Previously the alt was hardcoded empty, which
+    marked the image presentational and hid it from the accessibility
+    tree (and from Playwright/a11y snapshots) even when it rendered.
+  * Button config: a button with no `icon` now renders a single-letter
+    glyph (first character of `label`, else `alt`, else blank) instead
+    of silently defaulting to the built-in grid-2x2 icon.
+  * bbb-vnc-collaborate: the default "Grid View" button config now
+    carries alt: "Grid view" (no effect while it uses the built-in
+    grid-2x2 icon; applies if the icon is changed to an image).
+
+ -- Brent Baccala <cosine@freesoft.org>  Mon, 18 May 2026 00:43:38 +0000
+
 bbb-plugin-remote-desktop (0.3.0-2) unstable; urgency=medium
 
   * bbb-wss-proxy: fix session-token validation on BigBlueButton 3.0.

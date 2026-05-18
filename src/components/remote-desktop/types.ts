@@ -14,4 +14,7 @@ export interface ButtonConfig {
   label: string;
   icon: string;
   keysym: number;
+  // Alt text for a custom-image (URL/path/data-URI) icon. Ignored for
+  // built-in named icons. Falls back to `label` when omitted.
+  alt?: string;
 }
