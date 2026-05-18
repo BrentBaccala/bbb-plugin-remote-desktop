@@ -87,8 +87,8 @@ one-line sed against the minified action-bar component and becomes
 a no-op once the upstream change is merged — see
 [bigbluebutton/bigbluebutton#24719](https://github.com/bigbluebutton/bigbluebutton/pull/24719).
 
-After installation, run `bbb-conf --restart` to pick up the new
-plugin in `bbb-web`.
+After installation, run `bbb-conf --restart` so BBB picks up the
+newly registered plugin.
 
 ### bbb-wss-proxy (optional)
 
@@ -162,6 +162,18 @@ public:
             keysym: 65535
 ```
 
+> **Applying changes:** `bbb-html5.yml` is read by `bbb-apps-akka`
+> (via `clientSettingsOverrideFilePath`), **not** by `bbb-web`. After
+> editing it, restart that service:
+>
+> ```bash
+> sudo systemctl restart bbb-apps-akka   # or: sudo bbb-conf --restart
+> ```
+>
+> The settings are loaded when the service starts, so a browser
+> reload or joining a new meeting is **not** enough to pick up an
+> edit — the restart is required.
+
 ### Settings
 
 | Setting | Type | Default | Description |
@@ -178,13 +190,14 @@ keysym to the VNC server — useful for triggering window-manager
 shortcuts, keyboard-driven app commands, or anything else bound to
 a keystroke on the remote machine.
 
-Each button has three fields:
+Each button has these fields:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `label` | string | Tooltip text shown on hover |
-| `icon` | string | Icon name or image URL (see below) |
-| `keysym` | number | X11 keysym to send when clicked |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `label` | string | yes | Tooltip text shown on hover |
+| `keysym` | number | yes | X11 keysym to send when clicked |
+| `icon` | string | no | Icon name or image URL/path/data-URI (see below). If omitted, a single-letter glyph is generated from `label` (or `alt`). |
+| `alt` | string | no | Alt text for a custom-image icon (URL/path/data-URI). Falls back to `label`. Ignored for built-in named icons. |
 
 A simple example — a button that sends Ctrl+Alt+Del-equivalent
 behavior by triggering F22, with the remote machine's window manager
@@ -229,15 +242,18 @@ a custom image.
 
 **Custom image (PNG, SVG, JPEG, GIF, WebP, or `data:` URI)** — supply
 an absolute URL, an absolute path served by the BBB host, or a data
-URI. The plugin renders it as a 24×24 `<img>`. Examples:
+URI. The plugin renders it as a 24×24 `<img>`. Set `alt` for its
+alt text (it falls back to `label` if omitted). Examples:
 
 ```yaml
 buttons:
   - label: "Custom"
     icon: "https://example.com/icons/custom.png"
+    alt: "Custom action"
     keysym: 65491
   - label: "Local"
     icon: "/plugins/remote-desktop-extras/star.svg"
+    alt: "Star"
     keysym: 65492
   - label: "Inline"
     icon: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0i..."
@@ -249,14 +265,29 @@ inherit the action bar's text color the way the built-in SVGs do
 (the built-in icons use `currentColor`). For best results in both
 light and dark themes, ship an icon with its own colors baked in.
 
+**No icon** — if a button omits `icon` entirely, the plugin renders
+a single-letter glyph: the first character of `label`, or of `alt`
+if `label` is empty (blank if neither is set). The glyph uses
+`currentColor`, so it themes correctly in light and dark.
+
+```yaml
+buttons:
+  - label: "Reboot"      # renders an "R" glyph
+    keysym: 65493
+```
+
 ### Resolution order
 
-1. If the icon value matches a built-in plugin icon name, the
+1. If no `icon` is set, a single-letter glyph is generated from the
+   first character of `label` (or `alt` if `label` is empty; blank
+   if neither is set).
+2. If the icon value matches a built-in plugin icon name, the
    custom SVG is used.
-2. Otherwise, if the value looks like a URL, path, data URI, or has
+3. Otherwise, if the value looks like a URL, path, data URI, or has
    an image file extension (`.png`, `.jpg`, `.jpeg`, `.gif`, `.svg`,
-   `.webp`, `.ico`), it is rendered as an `<img>`.
-3. Otherwise, the value is passed through to BBB's icon system as
+   `.webp`, `.ico`), it is rendered as a 24×24 `<img>` with its
+   `alt` (falling back to `label`).
+4. Otherwise, the value is passed through to BBB's icon system as
    an icon name.
 
 ### Common keysyms

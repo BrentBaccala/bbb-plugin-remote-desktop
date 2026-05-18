@@ -1,3 +1,20 @@
+bbb-plugin-remote-desktop (0.3.0-4) unstable; urgency=medium
+
+  * Documentation only (no code change; the shipped plugin JS is
+    byte-identical to 0.3.0-3 apart from its commit-hash filename).
+  * README: document the new optional `alt` button-config field and
+    the no-`icon` single-letter-glyph fallback — the button fields
+    table now lists label/keysym/icon/alt with a Required column, the
+    Icons section and resolution order cover both, with examples.
+  * README: add an "Applying changes" callout — /etc/bigbluebutton/
+    bbb-html5.yml is read by bbb-apps-akka (clientSettingsOverride-
+    FilePath), not bbb-web; editing it needs `systemctl restart
+    bbb-apps-akka` (or `bbb-conf --restart`), and a browser reload or
+    new meeting does not pick the change up. Reworded the post-install
+    restart line so it no longer pins the mechanism to bbb-web.
+
+ -- Brent Baccala <cosine@freesoft.org>  Mon, 18 May 2026 02:55:25 +0000
+
 bbb-plugin-remote-desktop (0.3.0-3) unstable; urgency=medium
 
   * Custom-image action-bar button icons: the <img> rendered for a
