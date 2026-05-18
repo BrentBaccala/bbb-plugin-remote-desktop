@@ -1,3 +1,23 @@
+bbb-plugin-remote-desktop (2:0.3.0-5) unstable; urgency=medium
+
+  * Epoch bumped to 2. The retired standalone FPM bbb-wss-proxy
+    package was versioned 1:3.0.0+<timestamp> (epoch 1), which always
+    out-sorted this source's bbb-wss-proxy 0.3.0-N (epoch 0) in apt —
+    so a stale FPM build in a repo would silently downgrade the
+    fixed proxy. Epoch 2 makes this source's bbb-wss-proxy (and
+    bbb-plugin-remote-desktop) permanently outrank any 1:3.0.0+...
+    FPM build. The FPM packaging (collaborate/bbb-wss-proxy/ + its
+    Makefile target) has been removed; bbb-wss-proxy is now built
+    only as a second binary of this source.
+  * bbb-wss-proxy nginx: accept /proxy as well as /proxy/. The
+    location is a prefix match that a URI of exactly "/proxy" does
+    not satisfy, so a share URL without the trailing slash fell
+    through to BBB's catch-all and the WebSocket failed (code 1006).
+    Added an exact-match location with an internal (non-redirect)
+    rewrite to /proxy/, since a WebSocket handshake won't follow 3xx.
+
+ -- Brent Baccala <cosine@freesoft.org>  Mon, 18 May 2026 03:34:25 +0000
+
 bbb-plugin-remote-desktop (0.3.0-4) unstable; urgency=medium
 
   * Documentation only (no code change; the shipped plugin JS is
