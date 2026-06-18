@@ -1,3 +1,21 @@
+bbb-plugin-remote-desktop (2:0.3.0-6) unstable; urgency=medium
+
+  * Custom action-bar buttons: optional per-button `color` config. A
+    button in the `buttons` array can now set `color` (e.g. 'primary'
+    or 'default') to pick a BBB button color variant. Applied only when
+    specified, so an unspecified button renders 'primary' on every BBB
+    version. Honored on BBB >= 3.0.30 (upstream PR #24719); older
+    servers hardcode 'primary' and ignore the field. README documents
+    the new field in the buttons table with an example.
+  * postinst: documented that the minified-JS color patch is the
+    workaround for upstream PR #24719 (merged 2026-06-11, released in
+    BBB v3.0.30 on 2026-06-17). The existing grep guard already
+    self-skips the sed on >= 3.0.30; added a TODO to drop the block
+    once all target servers are on 3.0.30+, and noted its fragility
+    beyond the version guard. Comment-only; no behavior change.
+
+ -- Brent Baccala <cosine@freesoft.org>  Thu, 18 Jun 2026 01:20:33 -0400
+
 bbb-plugin-remote-desktop (2:0.3.0-5) unstable; urgency=medium
 
   * Epoch bumped to 2. The retired standalone FPM bbb-wss-proxy
