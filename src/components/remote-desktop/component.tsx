@@ -254,6 +254,12 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
           },
           position: ActionsBarPosition.RIGHT,
         });
+        // Optional per-button color. Only set when configured, so an
+        // unspecified button renders 'primary' on every BBB version; the
+        // field is honored on BBB >= 3.0.30 and ignored on older servers.
+        if (btnConfig.color) {
+          (btn as any).color = btnConfig.color;
+        }
         items.push(btn);
       }
 

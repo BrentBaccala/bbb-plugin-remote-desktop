@@ -198,6 +198,7 @@ Each button has these fields:
 | `keysym` | number | yes | X11 keysym to send when clicked |
 | `icon` | string | no | Icon name or image URL/path/data-URI (see below). If omitted, a single-letter glyph is generated from `label` (or `alt`). |
 | `alt` | string | no | Alt text for a custom-image icon (URL/path/data-URI). Falls back to `label`. Ignored for built-in named icons. |
+| `color` | string | no | BBB button color variant, e.g. `primary` (blue) or `default` (white). If omitted, the button renders `primary`. Only honored on BBB ≥ 3.0.30; older servers hardcode `primary` and ignore it. |
 
 A simple example — a button that sends Ctrl+Alt+Del-equivalent
 behavior by triggering F22, with the remote machine's window manager
@@ -220,6 +221,21 @@ buttons:
   - label: "Next slide"
     icon: "arrow-right"
     keysym: 65366
+```
+
+A button can set its color to stand out from (or blend in with) the
+others. `color` is honored on BBB ≥ 3.0.30; on older servers the button
+falls back to the default blue:
+
+```yaml
+buttons:
+  - label: "Workspace view"
+    icon: "grid-2x2"
+    keysym: 65491
+    color: "default"        # white button (blue on BBB < 3.0.30)
+  - label: "Next slide"
+    icon: "arrow-right"
+    keysym: 65366           # no color → blue (primary) everywhere
 ```
 
 ### Icons

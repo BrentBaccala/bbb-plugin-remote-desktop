@@ -17,4 +17,9 @@ export interface ButtonConfig {
   // Alt text for a custom-image (URL/path/data-URI) icon. Ignored for
   // built-in named icons. Falls back to `label` when omitted.
   alt?: string;
+  // Optional BBB button color variant (e.g. 'primary', 'default'). When
+  // omitted, no color is set so the button renders 'primary' on every BBB
+  // version. Only honored on BBB >= 3.0.30 (PR #24719); older servers
+  // hardcode 'primary' and ignore this field.
+  color?: string;
 }
