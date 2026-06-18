@@ -42,6 +42,15 @@ case "$1" in
             # can use 'default' (white) when locked and 'primary' (blue) when
             # unlocked. This is a no-op once the upstream fix is accepted.
             # See: https://github.com/bigbluebutton/bigbluebutton (actions-bar/component.jsx)
+            #
+            # STATUS: the upstream fix (PR #24719) merged 2026-06-11 and shipped
+            # in BBB v3.0.30 (2026-06-17). On >= 3.0.30 the bundle already reads
+            # plugin.color, so the grep guard below fails and this sed is skipped
+            # automatically. It is still required on <= 3.0.29 (incl. our 3.0.22
+            # production). TODO: drop this block once all target servers are on
+            # 3.0.30+. Note it's fragile beyond the version guard: the pattern
+            # hard-codes the minifier's output shape, and a bbb-html5 upgrade
+            # overwrites the bundle without re-running this postinst.
             for bundle in /usr/share/bigbluebutton/html5-client/bundle.*.js; do
                 if [ -f "$bundle" ] && grep -q 'color:"primary",size:"lg"' "$bundle"; then
                     sed -i 's/eLabel:\!0,color:"primary",size:"lg"/eLabel:\!0,color:j.color||"primary",size:"lg"/' "$bundle"
