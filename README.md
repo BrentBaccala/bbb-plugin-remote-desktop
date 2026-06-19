@@ -70,11 +70,13 @@ speaks WebSockets, or you'd rather run the bridge yourself:
   ([TigerVNC#1768](https://github.com/TigerVNC/tigervnc/issues/1768)).
 - **The [collaborate](https://github.com/BrentBaccala/collaborate)
   package suite** — a fuller turnkey deployment built around this
-  plugin. Adds per-user on-demand Xtigervnc desktops, JWT-issued
-  login URLs (`bbb-mklogin`), a GNOME-based default desktop, and
-  AWS hibernate integration. Heavier than just running the plugin
-  against a single VNC server, but appropriate if you want
-  per-participant desktops rather than one shared desktop.
+  plugin. Instead of one shared desktop, it gives **each participant
+  their own on-demand desktop**, and adds a **moderator grid view**
+  that shows all of those desktops at once — so a moderator can watch
+  every student and jump into any one of them to interact directly.
+  Heavier than running the plugin against a single VNC server, but the
+  right choice when you want a desktop per person (a classroom, a lab)
+  rather than one shared screen.
 
 The plugin itself is browser-side only; the one server-side component
 it ships is `bbb-wss-proxy` (above). For the other setups, see the
