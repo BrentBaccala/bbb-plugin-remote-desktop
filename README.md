@@ -48,7 +48,9 @@ doesn't accept WebSocket connections on its own, so something has to
 bridge `wss://` to the VNC port — and that is exactly what
 **`bbb-wss-proxy`** (shipped with this plugin) is for. Install it
 alongside the plugin and you're done; you do **not** need to find or
-stand up a special "WebSocket-capable" VNC server yourself.
+stand up a special "WebSocket-capable" VNC server yourself — almost no
+VNC server speaks WebSockets natively (KasmVNC is the only one we know
+of), which is exactly why the proxy exists.
 
 `bbb-wss-proxy` is the right choice for almost everyone. The other
 options below matter only in specific cases — your VNC server already
@@ -62,9 +64,10 @@ speaks WebSockets, or you'd rather run the bridge yourself:
   TLS reverse proxy on the same host as your BBB server, exposed at
   `wss://your-bbb-host/vnc` (or similar) — a hand-rolled equivalent of
   the proxy if you'd rather manage the bridge yourself.
-- **A VNC server with native WebSocket support** (e.g., recent
-  TigerVNC builds with `-rfbport` / `-websocketsPort`) — the one case
-  where no proxy is needed.
+- **A VNC server with native WebSocket support** (e.g., **KasmVNC**, a
+  TigerVNC fork with a built-in WebSocket/web server) — the one case
+  where no proxy is needed. Plain TigerVNC does **not** do this
+  ([TigerVNC#1768](https://github.com/TigerVNC/tigervnc/issues/1768)).
 - **The [collaborate](https://github.com/BrentBaccala/collaborate)
   package suite** — a fuller turnkey deployment built around this
   plugin. Adds per-user on-demand Xtigervnc desktops, JWT-issued
