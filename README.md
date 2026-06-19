@@ -74,7 +74,7 @@ browsers will block mixed content.
 
 Both `.deb`s — `bbb-plugin-remote-desktop` and the optional `bbb-wss-proxy` —
 are in the apt repo's package directory:
-<http://u24.freesoft.org/jammy-300/pool/main/b/bbb-plugin-remote-desktop/>.
+<https://www.freesoft.org/jammy-300/pool/main/b/bbb-plugin-remote-desktop/>.
 Download whichever versions you need from there.
 
 ### bbb-plugin-remote-desktop
