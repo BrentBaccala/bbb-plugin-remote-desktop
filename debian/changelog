@@ -1,3 +1,16 @@
+bbb-plugin-remote-desktop (2:0.3.0-7) unstable; urgency=medium
+
+  * Fix blank remote desktop on BigBlueButton 3.0.30+. PR #25219
+    ("Hide sessionToken from URL bar", commit 4327c0e874, first in 3.0.30)
+    strips sessionToken from window.location at client startup and stores it
+    in sessionStorage['BBB_sessionToken']. The plugin SDK's getSessionToken()
+    only reads the URL (unchanged through SDK 0.1.20), so it returned undefined
+    and the VNC websocket URL became ...?sessionToken=undefined -> nginx 401 ->
+    blank screen. Read the token version-agnostically (URL, then sessionStorage,
+    then the SDK), so one build works on 3.0.27/3.0.29/3.0.30+.
+
+ -- Brent Baccala <cosine@freesoft.org>  Thu, 18 Jun 2026 21:30:00 -0400
+
 bbb-plugin-remote-desktop (2:0.3.0-6) unstable; urgency=medium
 
   * Custom action-bar buttons: optional per-button `color` config. A

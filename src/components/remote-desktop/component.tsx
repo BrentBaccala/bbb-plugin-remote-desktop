@@ -72,7 +72,16 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   const isModerator = currentUser?.role === 'MODERATOR';
   const isPresenter = !!currentUser?.presenter;
   const userId = currentUser?.userId || '';
-  const sessionToken = pluginApi.getSessionToken();
+  // Obtain the BBB session token version-agnostically. BBB 3.0.30 (PR #25219)
+  // strips `sessionToken` from the URL at client startup and moves it to
+  // sessionStorage['BBB_sessionToken']; the SDK's getSessionToken() only reads
+  // the URL, so it returns undefined on 3.0.30+. Try the URL first (3.0.27/29
+  // and the brief pre-strip window), then sessionStorage (3.0.30+), then the
+  // SDK as a last resort. One build covers all three server versions.
+  const sessionToken = new URLSearchParams(window.location.search).get('sessionToken')
+    || window.sessionStorage.getItem('BBB_sessionToken')
+    || pluginApi.getSessionToken()
+    || '';
   const viewOnly = activeConfig ? !canOperate(activeConfig.operators || 'all', {
     presenter: isPresenter,
     isModerator,
