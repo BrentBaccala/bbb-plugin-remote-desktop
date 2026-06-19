@@ -42,18 +42,29 @@ screenshare falls short.
 
 ## Server-side requirements
 
-The plugin is a pure browser-side client. You need a WebSocket-capable
-VNC endpoint reachable from participants' browsers. A typical setup
-is one of:
+The plugin is a pure browser-side client: in the browser it speaks
+WebSockets (`wss://`) to your VNC server. An ordinary VNC server
+doesn't accept WebSocket connections on its own, so something has to
+bridge `wss://` to the VNC port — and that is exactly what
+**`bbb-wss-proxy`** (shipped with this plugin) is for. Install it
+alongside the plugin and you're done; you do **not** need to find or
+stand up a special "WebSocket-capable" VNC server yourself.
 
-- **`bbb-wss-proxy`** — a companion package shipped from the same
-  source as this plugin (see [Installation](#bbb-wss-proxy)).
-  The fastest path if your VNC server lives on the BBB host itself.
+`bbb-wss-proxy` is the right choice for almost everyone. The other
+options below matter only in specific cases — your VNC server already
+speaks WebSockets, or you'd rather run the bridge yourself:
+
+- **`bbb-wss-proxy`** *(recommended)* — the companion package shipped
+  from the same source as this plugin (see [Installation](#bbb-wss-proxy)).
+  The default, and the fastest path when your VNC server lives on the
+  BBB host itself.
 - **`x11vnc` (or `Xtigervnc`, `TigerVNC`) + `websockify`** behind a
   TLS reverse proxy on the same host as your BBB server, exposed at
-  `wss://your-bbb-host/vnc` (or similar).
+  `wss://your-bbb-host/vnc` (or similar) — a hand-rolled equivalent of
+  the proxy if you'd rather manage the bridge yourself.
 - **A VNC server with native WebSocket support** (e.g., recent
-  TigerVNC builds with `-rfbport` / `-websocketsPort`).
+  TigerVNC builds with `-rfbport` / `-websocketsPort`) — the one case
+  where no proxy is needed.
 - **The [collaborate](https://github.com/BrentBaccala/collaborate)
   package suite** — a fuller turnkey deployment built around this
   plugin. Adds per-user on-demand Xtigervnc desktops, JWT-issued
