@@ -47,7 +47,7 @@ VNC endpoint reachable from participants' browsers. A typical setup
 is one of:
 
 - **`bbb-wss-proxy`** — a companion package shipped from the same
-  source as this plugin (see [Installation](#bbb-wss-proxy-optional)).
+  source as this plugin (see [Installation](#bbb-wss-proxy)).
   The fastest path if your VNC server lives on the BBB host itself.
 - **`x11vnc` (or `Xtigervnc`, `TigerVNC`) + `websockify`** behind a
   TLS reverse proxy on the same host as your BBB server, exposed at
@@ -62,8 +62,8 @@ is one of:
   against a single VNC server, but appropriate if you want
   per-participant desktops rather than one shared desktop.
 
-The plugin itself does not include any server-side component beyond
-the optional `bbb-wss-proxy`; for the manual setups above, see the
+The plugin itself is browser-side only; the one server-side component
+it ships is `bbb-wss-proxy` (above). For the other setups, see the
 [websockify](https://github.com/novnc/websockify) project's docs.
 
 Note: the URL must be `wss://` (not `ws://`) — the plugin enforces
@@ -72,57 +72,87 @@ browsers will block mixed content.
 
 ## Installation
 
-Both `.deb`s — `bbb-plugin-remote-desktop` and the optional `bbb-wss-proxy` —
-are in the apt repo's package directory:
+Install on a **BigBlueButton 3.0** server. There are two ways to install —
+**pick one**, you don't need both:
+
+- **[Download the `.deb`s](#download-the-debs)** — quickest for a one-off
+  install.
+- **[Add the apt repo](#from-the-apt-repo)** — installs the same packages and
+  also gets you `apt upgrade` for future versions.
+
+Either way, two packages ship from this source:
+
+- **`bbb-plugin-remote-desktop`** — the plugin itself. **Required.**
+- **`bbb-wss-proxy`** — a WebSocket gateway in front of your VNC server.
+  Install it **unless your VNC server already accepts `wss://` connections
+  natively** — in that case the proxy is unnecessary and you point the share
+  dialog straight at your server (see
+  [Server-side requirements](#server-side-requirements)).
+
+### Download the `.deb`s
+
+Both `.deb`s are in the apt repo's package directory:
 <https://www.freesoft.org/jammy-300/pool/main/b/bbb-plugin-remote-desktop/>.
-Download whichever versions you need from there.
-
-### bbb-plugin-remote-desktop
-
-Install the Debian package on the BBB server:
+Download the version(s) you need, install with `dpkg`, then restart BBB so it
+picks up the newly registered plugin:
 
 ```bash
-sudo dpkg -i bbb-plugin-remote-desktop_*.deb
+sudo dpkg -i bbb-plugin-remote-desktop_*.deb   # the plugin (required)
+sudo dpkg -i bbb-wss-proxy_*.deb               # gateway — skip if your VNC speaks wss:// natively
+sudo bbb-conf --restart
 ```
 
-The postinst script registers the plugin manifest in
-`/etc/bigbluebutton/bbb-web.properties` and patches the BBB core
-bundle to support plugin-specified button colors. The patch is a
-one-line sed against the minified action-bar component and becomes
-a no-op once the upstream change is merged — see
+### From the apt repo
+
+This plugin and related BigBlueButton packages are also hosted in an apt repo.
+Add it once, then install and upgrade with `apt`:
+
+```bash
+# trust the repo's signing key
+curl -fsSL https://www.freesoft.org/jammy-300/freesoft.asc \
+  | sudo gpg --dearmor -o /usr/share/keyrings/freesoft.gpg
+
+# register the repo
+echo 'deb [signed-by=/usr/share/keyrings/freesoft.gpg] https://www.freesoft.org/jammy-300 bigbluebutton-jammy main' \
+  | sudo tee /etc/apt/sources.list.d/freesoft.list
+
+sudo apt update
+sudo apt install bbb-plugin-remote-desktop     # add bbb-wss-proxy unless your VNC speaks wss:// natively
+sudo bbb-conf --restart
+```
+
+### What the plugin install does
+
+The `bbb-plugin-remote-desktop` postinst registers the plugin manifest in
+`/etc/bigbluebutton/bbb-web.properties` and patches the BBB core bundle to
+support plugin-specified button colors. The patch is a one-line sed against the
+minified action-bar component and becomes a no-op once the upstream change is
+merged — see
 [bigbluebutton/bigbluebutton#24719](https://github.com/bigbluebutton/bigbluebutton/pull/24719).
 
-After installation, run `bbb-conf --restart` so BBB picks up the
-newly registered plugin.
+### bbb-wss-proxy
 
-### bbb-wss-proxy (optional)
-
-`bbb-wss-proxy` is a small Python wrapper around websockify that
-authenticates incoming WebSocket connections against BigBlueButton's
-own session-token API, then relays them to a backend VNC server. It
-ships in the same source package as the plugin (one
-`dpkg-buildpackage` produces both `.deb`s).
-
-```bash
-sudo dpkg -i bbb-wss-proxy_*.deb
-```
+`bbb-wss-proxy` is a small Python wrapper around websockify that authenticates
+incoming WebSocket connections against BigBlueButton's own session-token API,
+then relays them to a backend VNC server. It ships in the same source package
+as the plugin (one `dpkg-buildpackage` produces both `.deb`s).
 
 Once installed, a moderator's share URL is simply:
 
     wss://<your-bbb-host>/proxy/
 
-The proxy relays anything that authenticates to `localhost:5900`
-by default; set `DEFAULT_TARGET` in `/etc/default/bbb-wss-proxy` to
-point elsewhere, or set `ALLOWED_TARGETS` (a regex) to let the
-moderator pick a target via the `?target=host:port` query
-parameter. With `ALLOWED_TARGETS` enabled, a share URL might be:
+The proxy relays anything that authenticates to `localhost:5900` by default;
+set `DEFAULT_TARGET` in `/etc/default/bbb-wss-proxy` to point elsewhere, or set
+`ALLOWED_TARGETS` (a regex) to let the moderator pick a target via the
+`?target=host:port` query parameter. With `ALLOWED_TARGETS` enabled, a share
+URL might be:
 
     wss://<your-bbb-host>/proxy/?target=192.168.1.50:5901
 
-The proxy is **optional** — if you already have a WebSocket VNC
-endpoint reachable from participant browsers, you can install just
-`bbb-plugin-remote-desktop` and point its share dialog at your
-existing endpoint.
+You need `bbb-wss-proxy` (or an equivalent `wss://` gateway) **unless your VNC
+server already speaks WebSockets** — if it does, the proxy is unnecessary and
+you can point the share dialog straight at your server's existing `wss://`
+endpoint.
 
 ## Sharing a desktop (moderator workflow)
 
