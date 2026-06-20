@@ -191,9 +191,10 @@ endpoint.
 
 Each user can additionally toggle a local "lock" (lock icon in the
 action bar) that pauses *their own* input regardless of the
-operator policy. This is useful for an operator who wants to step
-back from a live desktop without changing the policy for everyone
-else.
+operator policy. This is useful when several users are operators at
+once and merely moving the mouse could disrupt whoever is actively
+driving the desktop — each non-driving operator can lock their own
+input to stay out of the way.
 
 ## Configuration
 
