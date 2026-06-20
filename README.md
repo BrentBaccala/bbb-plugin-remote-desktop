@@ -5,6 +5,12 @@ into a meeting's presentation area. Participants see the remote
 desktop in their browser via noVNC/WebSockets; the moderator chooses
 who can interact with it.
 
+![A remote Ubuntu desktop running htop, embedded in a BigBlueButton meeting's presentation area](assets/embedded-desktop.png)
+
+*A remote desktop — here a terminal running `htop` — shared live into a
+BigBlueButton meeting's presentation area. Participants see it on any device;
+the moderator's operator policy decides who can drive it.*
+
 ## Use cases
 
 The key difference from screen sharing: participants can *use* the
@@ -57,7 +63,7 @@ options below matter only in specific cases — your VNC server already
 speaks WebSockets, or you'd rather run the bridge yourself:
 
 - **`bbb-wss-proxy`** *(recommended)* — the companion package shipped
-  from the same source as this plugin (see [Installation](#bbb-wss-proxy)).
+  from the same source as this plugin (configured [below](#bbb-wss-proxy)).
   The default, and the fastest path when your VNC server lives on the
   BBB host itself.
 - **`x11vnc` (or `Xtigervnc`, `TigerVNC`) + `websockify`** behind a
@@ -100,10 +106,8 @@ Either way, two packages ship from this source:
 
 - **`bbb-plugin-remote-desktop`** — the plugin itself. **Required.**
 - **`bbb-wss-proxy`** — a WebSocket gateway in front of your VNC server.
-  Install it **unless your VNC server already accepts `wss://` connections
-  natively** — in that case the proxy is unnecessary and you point the share
-  dialog straight at your server (see
-  [Server-side requirements](#server-side-requirements)).
+  Install it **unless your VNC server already speaks `wss://` natively**
+  (see [Server-side requirements](#server-side-requirements)).
 
 ### Download the `.deb`s
 
@@ -146,30 +150,6 @@ minified action-bar component and becomes a no-op once the upstream change is
 merged — see
 [bigbluebutton/bigbluebutton#24719](https://github.com/bigbluebutton/bigbluebutton/pull/24719).
 
-### bbb-wss-proxy
-
-`bbb-wss-proxy` is a small Python wrapper around websockify that authenticates
-incoming WebSocket connections against BigBlueButton's own session-token API,
-then relays them to a backend VNC server. It ships in the same source package
-as the plugin (one `dpkg-buildpackage` produces both `.deb`s).
-
-Once installed, a moderator's share URL is simply:
-
-    wss://<your-bbb-host>/proxy/
-
-The proxy relays anything that authenticates to `localhost:5900` by default;
-set `DEFAULT_TARGET` in `/etc/default/bbb-wss-proxy` to point elsewhere, or set
-`ALLOWED_TARGETS` (a regex) to let the moderator pick a target via the
-`?target=host:port` query parameter. With `ALLOWED_TARGETS` enabled, a share
-URL might be:
-
-    wss://<your-bbb-host>/proxy/?target=192.168.1.50:5901
-
-You need `bbb-wss-proxy` (or an equivalent `wss://` gateway) **unless your VNC
-server already speaks WebSockets** — if it does, the proxy is unnecessary and
-you can point the share dialog straight at your server's existing `wss://`
-endpoint.
-
 ## Sharing a desktop (moderator workflow)
 
 1. In a meeting, open the action-bar "+" menu and select **Share a
@@ -206,7 +186,7 @@ public:
   plugins:
     - name: RemoteDesktop
       settings:
-        remoteDesktopUrl: wss://your-server.example.com/vnc
+        remoteDesktopUrl: wss://your-bbb-host/proxy/
         startLocked: true
         buttons:
           - label: "Send Ctrl+Alt+Del"
@@ -374,6 +354,23 @@ without conflicting with anything the user might type.
 The keysym values are standard X11 keysyms. The full list is in
 `/usr/include/X11/keysymdef.h` or at
 https://www.cl.cam.ac.uk/~mgk25/ucs/keysymdef.h
+
+### bbb-wss-proxy
+
+`bbb-wss-proxy` authenticates incoming WebSocket connections against
+BigBlueButton's own session-token API, then relays them to a backend VNC
+server. Its settings live in `/etc/default/bbb-wss-proxy`.
+
+By default it relays anything that authenticates to `localhost:5900`, so the
+share URL (and the `remoteDesktopUrl` above) is simply:
+
+    wss://<your-bbb-host>/proxy/
+
+Set `DEFAULT_TARGET` to relay to a different backend, or set `ALLOWED_TARGETS`
+(a regex) to let the moderator choose a target per share via a
+`?target=host:port` query parameter:
+
+    wss://<your-bbb-host>/proxy/?target=192.168.1.50:5901
 
 ## Clipboard sharing
 
