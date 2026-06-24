@@ -10,6 +10,7 @@ interface VncContentProps {
   clipboardEnabled: boolean;
   reconnectCounter: number;
   onRfbReady?: (rfb: any) => void;
+  onDesktopName?: (e: any) => void;
 }
 
 export function VncContent({
@@ -20,6 +21,7 @@ export function VncContent({
   clipboardEnabled,
   reconnectCounter,
   onRfbReady,
+  onDesktopName,
 }: VncContentProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
@@ -187,6 +189,7 @@ export function VncContent({
         url={url}
         credentials={{ password: password || '' }}
         onConnect={handleConnect}
+        onDesktopName={onDesktopName}
         viewOnly={effectiveViewOnly}
         shared
         scaleViewport

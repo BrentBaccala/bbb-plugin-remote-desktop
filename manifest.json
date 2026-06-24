@@ -8,6 +8,11 @@
       "name": "remoteDesktop",
       "pushPermission": ["moderator", "presenter"],
       "replaceOrDeletePermission": ["creator", "moderator"]
+    },
+    {
+      "name": "desktopMode",
+      "pushPermission": ["all"],
+      "replaceOrDeletePermission": ["creator", "moderator"]
     }
   ],
   "settingsSchema": [
@@ -28,6 +33,12 @@
       "type": "json",
       "required": false,
       "defaultValue": []
+    },
+    {
+      "name": "showDesktopName",
+      "type": "boolean",
+      "required": false,
+      "defaultValue": false
     }
   ]
 }

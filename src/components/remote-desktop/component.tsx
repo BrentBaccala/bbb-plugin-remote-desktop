@@ -14,6 +14,8 @@ import {
   LayoutPresentationAreaUiDataNames,
   UiLayouts,
   RESET_DATA_CHANNEL,
+  UserListItemLabel,
+  DataChannelPushEntryFunctionUserRole,
 } from 'bigbluebutton-html-plugin-sdk';
 
 import { RemoteDesktopConfig, RemoteDesktopPluginProps, ButtonConfig } from './types';
@@ -39,6 +41,15 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
     pushEntry,
     deleteEntry,
   } = pluginApi.useDataChannel<RemoteDesktopConfig>('remoteDesktop');
+  // Per-user "which desktop am I viewing" channel. Every user may push their
+  // own entry (pushPermission "all"); each entry is targeted at moderators
+  // only (receivers: MODERATOR), so the desktop name is visible to moderators
+  // but never reaches other viewers. Gated by the showDesktopName setting.
+  const {
+    data: modeChannel,
+    pushEntry: pushMode,
+    replaceEntry: replaceMode,
+  } = pluginApi.useDataChannel<{ name: string }>('desktopMode');
   const currentLayout = pluginApi.useUiData(
     LayoutPresentationAreaUiDataNames.CURRENT_ELEMENT,
     [{ isOpen: true, currentElement: UiLayouts.WHITEBOARD }],
@@ -48,10 +59,17 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   const startLocked = (settings as any)?.startLocked ?? true;
   const defaultUrl = (settings as any)?.remoteDesktopUrl || '';
   const buttons: ButtonConfig[] = (settings as any)?.buttons || [];
+  const showDesktopName = (settings as any)?.showDesktopName ?? false;
 
   const [showModal, setShowModal] = useState(false);
   const [genericContentId, setGenericContentId] = useState<string>('');
   const [activeConfig, setActiveConfig] = useState<RemoteDesktopConfig | null>(null);
+  // Name of the desktop this user is currently viewing, as reported by the
+  // VNC server via the RFB DesktopName update (noVNC 'desktopname' event).
+  // Empty string = on own desktop / not viewing anything -> no label shown.
+  const [myDesktopName, setMyDesktopName] = useState<string>('');
+  // Last value we published to the desktopMode channel, to avoid redundant writes.
+  const lastPublishedName = useRef<string | null>(null);
   const [showingContent, setShowingContent] = useState(false);
   const [locked, setLocked] = useState(startLocked);
   const settingsLoaded = useRef(false);
@@ -150,6 +168,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
         clipboardEnabled={clipboardEnabled}
         reconnectCounter={reconnectCounter}
         onRfbReady={(rfb: any) => { rfbRef.current = rfb; }}
+        onDesktopName={(e: any) => setMyDesktopName(e?.detail?.name ?? '')}
       />,
     );
   };
@@ -175,8 +194,52 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
       setGenericContentId('');
       vncRootRef.current = null;
       rfbRef.current = null;
+      // Not viewing any desktop anymore -> clear our reported desktop name.
+      setMyDesktopName('');
     }
   }, [activeConfig]);
+
+  // Publish our own desktop name to the moderator-only desktopMode channel.
+  // One entry per user: create it on first report, then replace in place
+  // (replace preserves the entry's moderator targeting). An empty name is
+  // still published (as a replace) so a previously-shown label is cleared.
+  useEffect(() => {
+    if (!showDesktopName || !userId) return;
+    const name = (myDesktopName || '').trim();
+    const entries = modeChannel?.data || [];
+    const mine = entries.find((e: any) => e.createdBy === userId);
+    if (mine) {
+      if (lastPublishedName.current !== name) {
+        replaceMode(mine.entryId, { name });
+        lastPublishedName.current = name;
+      }
+    } else if (name) {
+      pushMode(
+        { name },
+        { receivers: [{ role: DataChannelPushEntryFunctionUserRole.MODERATOR }] },
+      );
+      lastPublishedName.current = name;
+    }
+  }, [showDesktopName, myDesktopName, modeChannel, userId]);
+
+  // Moderators render one user-list sub-label per user reporting a non-empty
+  // desktop name. The core only renders a label whose userId matches a user
+  // currently in the list, so stale entries from departed users are ignored.
+  useEffect(() => {
+    if (!showDesktopName || !isModerator) {
+      pluginApi.setUserListItemAdditionalInformation([]);
+      return;
+    }
+    const entries = modeChannel?.data || [];
+    const items = entries
+      .filter((e: any) => ((e.payloadJson?.name || '') as string).trim())
+      .map((e: any) => new UserListItemLabel({
+        userId: e.createdBy,
+        label: e.payloadJson.name,
+        icon: 'desktop',
+      }));
+    pluginApi.setUserListItemAdditionalInformation(items);
+  }, [showDesktopName, isModerator, modeChannel]);
 
   // Re-render VncContent when locked/viewOnly/reconnect changes without recreating the connection
   useEffect(() => {
