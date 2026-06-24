@@ -213,7 +213,11 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
         replaceMode(mine.entryId, { name });
         lastPublishedName.current = name;
       }
-    } else if (name) {
+    } else if (name && lastPublishedName.current === null) {
+      // Create our single entry exactly once. Guarding on lastPublishedName
+      // avoids a duplicate push when the name changes again before our first
+      // entry round-trips back through the channel (replace takes over once
+      // `mine` appears).
       pushMode(
         { name },
         { receivers: [{ role: DataChannelPushEntryFunctionUserRole.MODERATOR }] },
