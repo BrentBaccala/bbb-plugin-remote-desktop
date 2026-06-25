@@ -1,3 +1,12 @@
+bbb-plugin-remote-desktop (2:0.3.0-8) unstable; urgency=medium
+
+  * Add opt-in showDesktopName feature: per-user desktop name shown in
+    the moderator user list, driven by the RFB DesktopName update. New
+    desktopMode data channel (moderator-targeted) and showDesktopName
+    setting (default false).
+
+ -- Brent Baccala <cosine@freesoft.org>  Wed, 24 Jun 2026 20:05:50 -0400
+
 bbb-plugin-remote-desktop (2:0.3.0-7) unstable; urgency=medium
 
   * Fix blank remote desktop on BigBlueButton 3.0.30+. PR #25219
