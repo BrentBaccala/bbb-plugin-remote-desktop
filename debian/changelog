@@ -1,3 +1,18 @@
+bbb-plugin-remote-desktop (2:0.3.0-9) unstable; urgency=medium
+
+  * Fix showDesktopName never updating for non-moderator (student) users.
+    The per-user desktopMode entry was pushed with MODERATOR-only receivers,
+    but BBB core only delivers a data-channel entry back to subscribers who
+    match its receivers (the creator is not auto-included). So a student
+    never received its own entry, `mine` stayed undefined, the replaceMode
+    update path was unreachable, and the student's moderator-list label
+    froze at the name pushed once at connect — never tracking screenshare
+    start/end. Add the publisher's own userId to the receivers so the entry
+    round-trips back and replaceMode tracks every transition. Moderators
+    were unaffected (they already matched the MODERATOR receiver).
+
+ -- Brent Baccala <cosine@freesoft.org>  Thu, 25 Jun 2026 14:23:16 -0400
+
 bbb-plugin-remote-desktop (2:0.3.0-8) unstable; urgency=medium
 
   * Add opt-in showDesktopName feature: per-user desktop name shown in

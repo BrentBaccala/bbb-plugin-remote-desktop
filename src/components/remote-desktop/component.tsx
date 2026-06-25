@@ -199,10 +199,21 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
     }
   }, [activeConfig]);
 
-  // Publish our own desktop name to the moderator-only desktopMode channel.
+  // Publish our own desktop name to the desktopMode channel for moderators.
   // One entry per user: create it on first report, then replace in place
-  // (replace preserves the entry's moderator targeting). An empty name is
-  // still published (as a replace) so a previously-shown label is cleared.
+  // (replace preserves the entry's targeting). An empty name is still
+  // published (as a replace) so a previously-shown label is cleared.
+  //
+  // Receivers are MODERATOR *and* this user's own userId. The own-userId
+  // target is essential, not redundant: the BBB core delivers a data-channel
+  // entry back to a subscriber only when that subscriber matches one of the
+  // entry's receivers (v_pluginDataChannelEntry joins on toRoles/toUserIds —
+  // the creator is NOT auto-included). A non-moderator (student) publishing
+  // with MODERATOR-only targeting therefore never sees its own entry, so
+  // `mine` stays undefined, the replace path below is unreachable, and the
+  // label freezes at whatever name was pushed once at connect. Adding our own
+  // userId lets the entry round-trip back to us so replaceMode can track every
+  // screenshare transition — without exposing the name to any other viewer.
   useEffect(() => {
     if (!showDesktopName || !userId) return;
     const name = (myDesktopName || '').trim();
@@ -220,7 +231,12 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
       // `mine` appears).
       pushMode(
         { name },
-        { receivers: [{ role: DataChannelPushEntryFunctionUserRole.MODERATOR }] },
+        {
+          receivers: [
+            { role: DataChannelPushEntryFunctionUserRole.MODERATOR },
+            { userId },
+          ],
+        },
       );
       lastPublishedName.current = name;
     }
