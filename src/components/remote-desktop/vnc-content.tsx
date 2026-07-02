@@ -239,10 +239,8 @@ export function VncContent({
             color: '#fff',
           }}
         >
-          <div style={{ fontSize: 16, fontWeight: 600 }}>Remote desktop disconnected</div>
-          <div style={{ fontSize: 14, maxWidth: 480, lineHeight: 1.4, opacity: 0.9 }}>
-            {connError.reason
-              || 'The connection to the remote desktop was lost. Try reconnecting; if that does not help, reload the page.'}
+          <div style={{ fontSize: 15, maxWidth: 480, lineHeight: 1.4 }}>
+            {connError.reason || 'The connection to the remote desktop was lost.'}
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             {onReconnect && (
