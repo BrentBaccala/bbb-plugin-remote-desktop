@@ -1,3 +1,15 @@
+bbb-plugin-remote-desktop (2:0.3.0-14) unstable; urgency=medium
+
+  * Connection-error overlay: distinguish "never connected" from "lost". A share
+    pointed at an unresponsive/unreachable endpoint (the /vnc websocket never
+    opens, or noVNC never reaches its 'connect' event) now reads "Could not
+    connect to the remote desktop." The "The connection to the remote desktop
+    was lost." wording is reserved for a drop after a successful connect. Track a
+    per-attempt hasConnected flag (set on 'connect', reset on reconnect) and
+    choose the message from it.
+
+ -- Brent Baccala <cosine@freesoft.org>  Wed, 02 Jul 2026 17:45:00 -0400
+
 bbb-plugin-remote-desktop (2:0.3.0-13) unstable; urgency=medium
 
   * Fix a spurious second VNC connection on every re-share. When a desktop was

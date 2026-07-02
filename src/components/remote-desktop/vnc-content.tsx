@@ -37,9 +37,17 @@ export function VncContent({
   // a plain 'disconnect' carries no message so we show generic text. This keeps
   // the plugin general — it renders whatever reason a VNC server chose to send,
   // with no assumptions about the host/auth service.
-  const [connError, setConnError] = useState<{ reason: string | null } | null>(null);
-  // A fresh connection attempt (key/reconnectCounter change) clears the overlay.
-  useEffect(() => { setConnError(null); }, [reconnectCounter]);
+  // `neverConnected` distinguishes a drop *after* a successful connect ("lost")
+  // from a connection that was never established ("could not connect", e.g. an
+  // unresponsive endpoint), so the overlay wording is accurate.
+  const [connError, setConnError] = useState<{ reason: string | null; neverConnected?: boolean } | null>(null);
+  // Whether the CURRENT attempt (this RFB / key) ever reached noVNC's 'connect'
+  // event. Reset per attempt so a reconnect that fails to connect is correctly
+  // reported as "could not connect", not "lost".
+  const hasConnected = useRef(false);
+  // A fresh connection attempt (key/reconnectCounter change) clears the overlay
+  // and resets the has-connected flag — the new attempt hasn't connected yet.
+  useEffect(() => { setConnError(null); hasConnected.current = false; }, [reconnectCounter]);
   const handleSecurityFailure = useCallback((e: any) => {
     const reason = (e?.detail?.reason ?? '').toString().trim();
     setConnError({ reason: reason || null });
@@ -52,8 +60,9 @@ export function VncContent({
     // disconnect. Intentional teardowns don't show a stray overlay: stop-sharing
     // unmounts this component, and a reconnect clears the error via the
     // reconnectCounter effect + handleConnect. 'securityfailure' fires first with
-    // a specific reason, so don't clobber it.
-    setConnError((prev) => prev || { reason: null });
+    // a specific reason, so don't clobber it. neverConnected chooses the wording:
+    // a disconnect before any 'connect' event = "could not connect", not "lost".
+    setConnError((prev) => prev || { reason: null, neverConnected: !hasConnected.current });
   }, []);
 
   // Reconnect is handled by changing VncDisplay's key (below),
@@ -135,6 +144,7 @@ export function VncContent({
   };
 
   const handleConnect = useCallback(() => {
+    hasConnected.current = true;   // this attempt reached the server
     setConnError(null);   // successful (re)connect clears any error overlay
     if (playerRef.current?.rfb?._handleResize) {
       playerRef.current.rfb._handleResize();
@@ -245,7 +255,10 @@ export function VncContent({
           }}
         >
           <div style={{ fontSize: 15, maxWidth: 480, lineHeight: 1.4 }}>
-            {connError.reason || 'The connection to the remote desktop was lost.'}
+            {connError.reason
+              || (connError.neverConnected
+                ? 'Could not connect to the remote desktop.'
+                : 'The connection to the remote desktop was lost.')}
           </div>
           {onReconnect && (
             <div style={{ display: 'flex', gap: 12 }}>
