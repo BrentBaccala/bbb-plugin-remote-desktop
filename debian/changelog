@@ -1,3 +1,14 @@
+bbb-plugin-remote-desktop (2:0.3.0-10) unstable; urgency=medium
+
+  * Show a connection-error overlay instead of a blank panel when the remote
+    desktop disconnects or is rejected. Renders the server-supplied reason from
+    an RFB security failure (noVNC 'securityfailure' -> detail.reason) when
+    present, else generic text, with Reconnect and Reload-page buttons. General
+    to any VNC server -- no host/auth-service coupling. A clean disconnect (e.g.
+    stop-sharing) is ignored, so it shows no spurious error.
+
+ -- Brent Baccala <cosine@freesoft.org>  Wed, 01 Jul 2026 23:51:08 -0400
+
 bbb-plugin-remote-desktop (2:0.3.0-9) unstable; urgency=medium
 
   * Fix showDesktopName never updating for non-moderator (student) users.

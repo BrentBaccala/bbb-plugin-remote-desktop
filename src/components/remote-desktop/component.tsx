@@ -169,6 +169,7 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
         reconnectCounter={reconnectCounter}
         onRfbReady={(rfb: any) => { rfbRef.current = rfb; }}
         onDesktopName={(e: any) => setMyDesktopName(e?.detail?.name ?? '')}
+        onReconnect={() => setReconnectCounter((c) => c + 1)}
       />,
     );
   };

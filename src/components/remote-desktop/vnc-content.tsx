@@ -11,6 +11,7 @@ interface VncContentProps {
   reconnectCounter: number;
   onRfbReady?: (rfb: any) => void;
   onDesktopName?: (e: any) => void;
+  onReconnect?: () => void;
 }
 
 export function VncContent({
@@ -22,6 +23,7 @@ export function VncContent({
   reconnectCounter,
   onRfbReady,
   onDesktopName,
+  onReconnect,
 }: VncContentProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
@@ -29,6 +31,25 @@ export function VncContent({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const onRfbReadyRef = useRef(onRfbReady);
   onRfbReadyRef.current = onRfbReady;
+
+  // Connection-error overlay. `reason` is the server-supplied string from an
+  // RFB SecurityResult failure (noVNC 'securityfailure' event), when present;
+  // a plain 'disconnect' carries no message so we show generic text. This keeps
+  // the plugin general — it renders whatever reason a VNC server chose to send,
+  // with no assumptions about the host/auth service.
+  const [connError, setConnError] = useState<{ reason: string | null } | null>(null);
+  // A fresh connection attempt (key/reconnectCounter change) clears the overlay.
+  useEffect(() => { setConnError(null); }, [reconnectCounter]);
+  const handleSecurityFailure = useCallback((e: any) => {
+    const reason = (e?.detail?.reason ?? '').toString().trim();
+    setConnError({ reason: reason || null });
+  }, []);
+  const handleDisconnect = useCallback((e: any) => {
+    // A clean disconnect is an intentional teardown (e.g. stop sharing); ignore.
+    if (e?.detail?.clean) return;
+    // 'securityfailure' fires first with a specific reason — don't clobber it.
+    setConnError((prev) => prev || { reason: null });
+  }, []);
 
   // Reconnect is handled by changing VncDisplay's key (below),
   // which forces React to unmount/remount the component cleanly.
@@ -109,6 +130,7 @@ export function VncContent({
   };
 
   const handleConnect = useCallback(() => {
+    setConnError(null);   // successful (re)connect clears any error overlay
     if (playerRef.current?.rfb?._handleResize) {
       playerRef.current.rfb._handleResize();
     }
@@ -189,12 +211,61 @@ export function VncContent({
         url={url}
         credentials={{ password: password || '' }}
         onConnect={handleConnect}
+        onDisconnect={handleDisconnect}
+        onSecurityFailure={handleSecurityFailure}
         onDesktopName={onDesktopName}
         viewOnly={effectiveViewOnly}
         shared
         scaleViewport
         ref={playerRef}
       />
+
+      {/* Connection-error overlay: turns a blank panel into a message. Shows the
+          server's reason (RFB security failure) when available, else generic. */}
+      {connError && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 20,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 16,
+            padding: 24,
+            textAlign: 'center',
+            background: 'rgba(6, 23, 42, 0.92)',
+            color: '#fff',
+          }}
+        >
+          <div style={{ fontSize: 16, fontWeight: 600 }}>Remote desktop disconnected</div>
+          <div style={{ fontSize: 14, maxWidth: 480, lineHeight: 1.4, opacity: 0.9 }}>
+            {connError.reason
+              || 'The connection to the remote desktop was lost. Try reconnecting; if that does not help, reload the page.'}
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            {onReconnect && (
+              <button type="button" onClick={() => onReconnect()} style={overlayBtnStyle}>
+                Reconnect
+              </button>
+            )}
+            <button type="button" onClick={() => window.location.reload()} style={overlayBtnStyle}>
+              Reload page
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+const overlayBtnStyle: React.CSSProperties = {
+  padding: '8px 16px',
+  border: '1px solid rgba(255, 255, 255, 0.4)',
+  borderRadius: 4,
+  background: 'rgba(255, 255, 255, 0.1)',
+  color: '#fff',
+  cursor: 'pointer',
+  fontSize: 14,
+};
