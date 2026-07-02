@@ -247,16 +247,13 @@ export function VncContent({
           <div style={{ fontSize: 15, maxWidth: 480, lineHeight: 1.4 }}>
             {connError.reason || 'The connection to the remote desktop was lost.'}
           </div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            {onReconnect && (
+          {onReconnect && (
+            <div style={{ display: 'flex', gap: 12 }}>
               <button type="button" onClick={() => onReconnect()} style={overlayBtnStyle}>
                 Reconnect
               </button>
-            )}
-            <button type="button" onClick={() => window.location.reload()} style={overlayBtnStyle}>
-              Reload page
-            </button>
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>

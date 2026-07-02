@@ -1,3 +1,12 @@
+bbb-plugin-remote-desktop (2:0.3.0-12) unstable; urgency=medium
+
+  * Disconnect overlay: drop the "Reload page" button, leaving just "Reconnect".
+    A page reload re-fetches the meeting's original (pinned) plugin bundle and
+    doesn't recover the desktop; Reconnect retries the VNC connection, which is
+    the action that actually works.
+
+ -- Brent Baccala <cosine@freesoft.org>  Thu, 02 Jul 2026 00:36:00 -0400
+
 bbb-plugin-remote-desktop (2:0.3.0-11) unstable; urgency=medium
 
   * Fix the disconnect overlay never showing on a server-side drop. noVNC's
