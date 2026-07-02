@@ -1,3 +1,19 @@
+bbb-plugin-remote-desktop (2:0.3.0-13) unstable; urgency=medium
+
+  * Fix a spurious second VNC connection on every re-share. When a desktop was
+    already shown once in a session, re-sharing made the content leave and
+    re-enter the presentation pile, which tripped the "content returned to
+    layout" forced-reconnect (meant only for screenshare interruptions). That
+    reconnect fired while the fresh websocket was still handshaking, aborting it
+    (browser logs "can't establish a connection to wss://.../vnc") and opening a
+    second one — so two tigervncservers spawned and one was torn down, and the
+    aborted socket briefly showed the "connection lost" overlay. The reconnect
+    tracking is now reset whenever a new desktop config builds a fresh root, so
+    a fresh share's first pile entry is treated as a first appearance. The
+    screenshare-return case (activeConfig unchanged) still reconnects as before.
+
+ -- Brent Baccala <cosine@freesoft.org>  Wed, 02 Jul 2026 13:20:00 -0400
+
 bbb-plugin-remote-desktop (2:0.3.0-12) unstable; urgency=medium
 
   * Disconnect overlay: drop the "Reload page" button, leaving just "Reconnect".

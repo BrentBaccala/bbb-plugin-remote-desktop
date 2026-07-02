@@ -177,6 +177,17 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   // Render VNC display via GenericContentMainArea when active
   useEffect(() => {
     if (activeConfig && activeConfig.url) {
+      // A new/changed desktop config builds a fresh React root with a brand-new
+      // VNC connection (contentFunction below). Reset the layout-return tracking
+      // so this fresh content's first entry into the presentation pile is treated
+      // as a first appearance, NOT as a "returned after screenshare" — otherwise
+      // the forced-reconnect effect fires while the fresh websocket is still
+      // handshaking, aborts it, and opens a second one (two desktops spawn, one
+      // torn down; the aborted socket surfaces as "connection lost"). The
+      // screenshare-return case leaves activeConfig unchanged, so it still resets
+      // to true on entry and reconnects on a later return, as intended.
+      hasEverShownContent.current = false;
+      wasShowingContent.current = false;
       pluginApi.setGenericContentItems([]);
       const ids = pluginApi.setGenericContentItems([
         new GenericContentMainArea({
