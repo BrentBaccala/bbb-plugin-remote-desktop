@@ -1,3 +1,14 @@
+bbb-plugin-remote-desktop (2:0.3.0-11) unstable; urgency=medium
+
+  * Fix the disconnect overlay never showing on a server-side drop. noVNC's
+    _rfbCleanDisconnect defaults to true and is only cleared on an internal RFB
+    failure, so a server going away arrives as a "clean" disconnect; the
+    previous 'if (clean) return' guard swallowed exactly that case. Show the
+    overlay on any disconnect (intentional teardowns unmount the panel or clear
+    via reconnect, so no stray overlay).
+
+ -- Brent Baccala <cosine@freesoft.org>  Thu, 02 Jul 2026 00:08:51 -0400
+
 bbb-plugin-remote-desktop (2:0.3.0-10) unstable; urgency=medium
 
   * Show a connection-error overlay instead of a blank panel when the remote

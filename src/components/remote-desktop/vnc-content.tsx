@@ -44,10 +44,15 @@ export function VncContent({
     const reason = (e?.detail?.reason ?? '').toString().trim();
     setConnError({ reason: reason || null });
   }, []);
-  const handleDisconnect = useCallback((e: any) => {
-    // A clean disconnect is an intentional teardown (e.g. stop sharing); ignore.
-    if (e?.detail?.clean) return;
-    // 'securityfailure' fires first with a specific reason — don't clobber it.
+  const handleDisconnect = useCallback(() => {
+    // Show the overlay on any unexpected disconnect. We deliberately do NOT gate
+    // on e.detail.clean: noVNC's _rfbCleanDisconnect defaults to true and is only
+    // set false on an internal RFB _fail(), so a *server-side* drop (the VNC
+    // server going away — the case we most want to surface) arrives as a "clean"
+    // disconnect. Intentional teardowns don't show a stray overlay: stop-sharing
+    // unmounts this component, and a reconnect clears the error via the
+    // reconnectCounter effect + handleConnect. 'securityfailure' fires first with
+    // a specific reason, so don't clobber it.
     setConnError((prev) => prev || { reason: null });
   }, []);
 
