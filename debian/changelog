@@ -1,3 +1,20 @@
+bbb-plugin-remote-desktop (2:0.3.0-15) unstable; urgency=medium
+
+  * Desktop-name label: make the desktopMode publish path level-triggered so the
+    persisted entry converges to the current view state instead of freezing.
+    The old effect was edge-triggered and gated on a single lastPublishedName
+    ref: under reconnect churn a name update (including a blank clearing the
+    label) could be dropped while the initial create was still round-tripping,
+    stranding the label at a stale value (default hostname, or a legitimate
+    screenshare-presenter / grid name). Now the effect compares the persisted
+    entry to the current name on every channel update and issues a replace
+    whenever they differ; a distinct pushInFlight ref guards only against a
+    duplicate create while the first push is in flight, and never suppresses a
+    replace. Composes with the vnc_collaborate -blank-name fix (which stops
+    own-desktop overlays leaking a default name into RFB ServerInit).
+
+ -- Brent Baccala <cosine@freesoft.org>  Thu, 17 Jul 2026 21:00:00 -0400
+
 bbb-plugin-remote-desktop (2:0.3.0-14) unstable; urgency=medium
 
   * Connection-error overlay: distinguish "never connected" from "lost". A share

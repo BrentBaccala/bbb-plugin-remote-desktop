@@ -68,8 +68,13 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   // VNC server via the RFB DesktopName update (noVNC 'desktopname' event).
   // Empty string = on own desktop / not viewing anything -> no label shown.
   const [myDesktopName, setMyDesktopName] = useState<string>('');
-  // Last value we published to the desktopMode channel, to avoid redundant writes.
-  const lastPublishedName = useRef<string | null>(null);
+  // Tracks a pushMode() whose created entry has not yet round-tripped back
+  // through the channel (so `mine` is still undefined). It exists only to
+  // avoid a duplicate create while the first push is in flight; it is NOT a
+  // value-guard (an earlier value-guard, lastPublishedName, could swallow a
+  // dropped blank and freeze the label). Set on push, cleared once `mine`
+  // appears. See the publish effect below.
+  const pushInFlight = useRef(false);
   const [showingContent, setShowingContent] = useState(false);
   const [locked, setLocked] = useState(startLocked);
   const settingsLoaded = useRef(false);
@@ -212,9 +217,21 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   }, [activeConfig]);
 
   // Publish our own desktop name to the desktopMode channel for moderators.
-  // One entry per user: create it on first report, then replace in place
-  // (replace preserves the entry's targeting). An empty name is still
-  // published (as a replace) so a previously-shown label is cleared.
+  // One entry per user: create it on first report, then reconcile in place so
+  // the persisted entry always *converges* to the current desktop name.
+  //
+  // This effect is level-triggered, not edge-triggered: on every run it
+  // compares the persisted value against the current name and issues a replace
+  // whenever they differ, regardless of how we got here. A dropped or
+  // late-arriving update (e.g. a blank that landed while our create was still
+  // in flight) therefore self-heals on the next channel update instead of
+  // freezing the label — the failure mode of the previous edge-triggered
+  // design, which gated writes on a single lastPublishedName ref and could
+  // strand ANY value (default hostname, screenshare presenter, grid label).
+  //
+  // The only guard is pushInFlight, which prevents a duplicate *create* while
+  // our first push has not yet round-tripped back as `mine`. It is not a
+  // value-guard and never suppresses a replace.
   //
   // Receivers are MODERATOR *and* this user's own userId. The own-userId
   // target is essential, not redundant: the BBB core delivers a data-channel
@@ -222,25 +239,27 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   // entry's receivers (v_pluginDataChannelEntry joins on toRoles/toUserIds —
   // the creator is NOT auto-included). A non-moderator (student) publishing
   // with MODERATOR-only targeting therefore never sees its own entry, so
-  // `mine` stays undefined, the replace path below is unreachable, and the
-  // label freezes at whatever name was pushed once at connect. Adding our own
-  // userId lets the entry round-trip back to us so replaceMode can track every
-  // screenshare transition — without exposing the name to any other viewer.
+  // `mine` stays undefined, the reconcile path is unreachable, and the label
+  // freezes. Adding our own userId lets the entry round-trip back so the
+  // reconcile can track every transition — without exposing the name to any
+  // other viewer.
   useEffect(() => {
     if (!showDesktopName || !userId) return;
     const name = (myDesktopName || '').trim();
     const entries = modeChannel?.data || [];
     const mine = entries.find((e: any) => e.createdBy === userId);
     if (mine) {
-      if (lastPublishedName.current !== name) {
+      // Our entry now exists in the channel; any in-flight create has landed.
+      pushInFlight.current = false;
+      const persisted = ((mine.payloadJson?.name || '') as string).trim();
+      if (persisted !== name) {
         replaceMode(mine.entryId, { name });
-        lastPublishedName.current = name;
       }
-    } else if (name && lastPublishedName.current === null) {
-      // Create our single entry exactly once. Guarding on lastPublishedName
-      // avoids a duplicate push when the name changes again before our first
-      // entry round-trips back through the channel (replace takes over once
-      // `mine` appears).
+    } else if (name && !pushInFlight.current) {
+      // No entry yet and we have a non-empty name to show: create it once.
+      // pushInFlight blocks a second create until this one round-trips; the
+      // reconcile branch above takes over from then on.
+      pushInFlight.current = true;
       pushMode(
         { name },
         {
@@ -250,7 +269,6 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
           ],
         },
       );
-      lastPublishedName.current = name;
     }
   }, [showDesktopName, myDesktopName, modeChannel, userId]);
 
