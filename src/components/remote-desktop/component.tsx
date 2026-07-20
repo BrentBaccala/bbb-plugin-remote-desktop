@@ -313,6 +313,10 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
             allowed: true,
             onClick: () => {
               deleteEntry([RESET_DATA_CHANNEL]);
+              // Signal recorders (bbb-vnc-recorder) that the remote-desktop
+              // share has ended. Persisted only when the meeting's manifest
+              // enables eventPersistence.
+              pluginApi.persistEvent?.('remote-desktop-share-stop', {});
             },
           }),
         );
@@ -410,6 +414,15 @@ function RemoteDesktopPlugin({ pluginUuid }: RemoteDesktopPluginProps): React.Re
   const handleShare = (config: RemoteDesktopConfig) => {
     deleteEntry([RESET_DATA_CHANNEL]);
     pushEntry(config);
+    // Signal recorders (bbb-vnc-recorder) that a remote-desktop share has
+    // started (gate 2). The URL is not a recording key -- the recorder keys
+    // on UNIX username -- but is carried for provenance. Persisted only when
+    // the meeting's manifest enables eventPersistence.
+    pluginApi.persistEvent?.('remote-desktop-share-start', {
+      url: config.url,
+      operators: config.operators,
+      sharedBy: config.sharedBy,
+    });
     setShowModal(false);
   };
 

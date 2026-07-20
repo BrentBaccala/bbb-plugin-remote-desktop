@@ -1,3 +1,16 @@
+bbb-plugin-remote-desktop (2:0.3.0-16) unstable; urgency=medium
+
+  * Emit persistEvents for the remote-desktop share lifecycle so the
+    bbb-vnc-recorder service can detect gate 2 (a remote-desktop share is
+    active). handleShare now fires persistEvent('remote-desktop-share-start',
+    {url, operators, sharedBy}); the "Stop sharing remote desktop" action
+    fires persistEvent('remote-desktop-share-stop', {}). manifest.json gains
+    "eventPersistence": { "isEnabled": true } so akka-apps re-broadcasts these
+    as PluginPersistEventEvtMsg. The share URL is provenance only, never a
+    recording key (the recorder keys on UNIX username).
+
+ -- Brent Baccala <cosine@freesoft.org>  Mon, 20 Jul 2026 00:22:13 -0400
+
 bbb-plugin-remote-desktop (2:0.3.0-15) unstable; urgency=medium
 
   * Desktop-name label: make the desktopMode publish path level-triggered so the

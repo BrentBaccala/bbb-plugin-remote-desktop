@@ -3,6 +3,7 @@
   "name": "RemoteDesktop",
   "javascriptEntrypointUrl": "RemoteDesktop.js",
   "localesBaseUrl": "locales",
+  "eventPersistence": { "isEnabled": true },
   "dataChannels": [
     {
       "name": "remoteDesktop",
